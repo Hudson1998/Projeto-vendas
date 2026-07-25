@@ -11,11 +11,8 @@ class HomeController extends Controller
     {
         $produtos = Product::orderBy('categoria')->orderBy('nome')->get();
 
-        $categorias = $produtos->pluck('categoria')->unique()->values();
-
         return view('home', [
             'produtos' => $produtos,
-            'categorias' => $categorias,
         ]);
     }
 }

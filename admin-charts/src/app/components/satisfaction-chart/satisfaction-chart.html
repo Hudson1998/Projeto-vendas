@@ -1,0 +1,18 @@
+<div class="chart-panel">
+  <div class="chart-panel__header">
+    <h2 class="chart-panel__title">Grau de satisfação</h2>
+    <div class="satisfaction-summary">
+      <span class="satisfaction-summary__value">{{ media() }}<small>/5</small></span>
+      <span class="satisfaction-summary__label">{{ totalAvaliacoes() }} avaliações</span>
+    </div>
+  </div>
+  <div class="chart-canvas-wrap">
+    <canvas #canvas></canvas>
+    @if (carregando()) {
+      <div class="chart-loading">Carregando...</div>
+    }
+    @if (!carregando() && totalAvaliacoes() === 0) {
+      <div class="chart-loading">Nenhuma avaliação registrada ainda.</div>
+    }
+  </div>
+</div>

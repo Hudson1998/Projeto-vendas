@@ -10,10 +10,12 @@ class Product extends Model
         'nome',
         'categoria',
         'preco',
+        'custo',
         'imagem',
     ];
 
     protected $casts = [
         'preco' => 'decimal:2',
+        'custo' => 'decimal:2',
     ];
 }

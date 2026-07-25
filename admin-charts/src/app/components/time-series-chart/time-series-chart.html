@@ -1,0 +1,38 @@
+<div class="chart-panel">
+  <div class="chart-panel__header">
+    <h2 class="chart-panel__title">{{ titulo }}</h2>
+    <div class="chart-tabs">
+      <button
+        type="button"
+        class="chart-tab"
+        [class.is-active]="granularidade() === 'dia'"
+        (click)="mudarGranularidade('dia')"
+      >
+        Diário
+      </button>
+      <button
+        type="button"
+        class="chart-tab"
+        [class.is-active]="granularidade() === 'mes'"
+        (click)="mudarGranularidade('mes')"
+      >
+        Mensal
+      </button>
+      <button
+        type="button"
+        class="chart-tab"
+        [class.is-active]="granularidade() === 'ano'"
+        (click)="mudarGranularidade('ano')"
+      >
+        Anual
+      </button>
+    </div>
+  </div>
+
+  <div class="chart-canvas-wrap">
+    <canvas #canvas></canvas>
+    @if (carregando()) {
+      <div class="chart-loading">Carregando...</div>
+    }
+  </div>
+</div>

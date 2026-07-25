@@ -1,0 +1,57 @@
+.chart-panel {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  padding: 24px 26px;
+  margin-bottom: 24px;
+}
+.chart-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.chart-panel__title {
+  font-family: "Italiana", serif;
+  font-size: 20px;
+  font-weight: 400;
+  margin: 0;
+  color: var(--fg);
+}
+.satisfaction-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.satisfaction-summary__value {
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 700;
+  font-size: 26px;
+  color: var(--fg);
+}
+.satisfaction-summary__value small {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--muted-dim);
+}
+.satisfaction-summary__label {
+  font-size: 11px;
+  color: var(--muted-dim);
+}
+.chart-canvas-wrap {
+  position: relative;
+  height: 260px;
+}
+.chart-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-dim);
+  font-size: 13px;
+  text-align: center;
+  background: var(--bg-alt);
+}

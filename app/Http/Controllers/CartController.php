@@ -1,0 +1,127 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\CartItem;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\Product;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
+
+class CartController extends Controller
+{
+    public function index(Request $request): View
+    {
+        $itens = CartItem::with('product')
+            ->where('user_id', $request->user()->id)
+            ->latest()
+            ->get();
+
+        $total = $itens->sum(fn ($item) => $item->product->preco * $item->quantidade);
+
+        return view('cart.index', [
+            'itens' => $itens,
+            'total' => $total,
+        ]);
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'product_id' => ['required', 'integer', 'exists:products,id'],
+        ]);
+
+        $item = CartItem::firstOrNew([
+            'user_id' => $request->user()->id,
+            'product_id' => $data['product_id'],
+        ]);
+        $item->quantidade = ($item->quantidade ?? 0) + 1;
+        $item->save();
+
+        $quantidadeTotal = CartItem::where('user_id', $request->user()->id)->sum('quantidade');
+
+        return response()->json([
+            'message' => 'Peça adicionada ao carrinho.',
+            'quantidadeCarrinho' => $quantidadeTotal,
+        ]);
+    }
+
+    public function update(Request $request, CartItem $cartItem): RedirectResponse
+    {
+        abort_unless($cartItem->user_id === $request->user()->id, 403);
+
+        $data = $request->validate([
+            'quantidade' => ['required', 'integer', 'min:1', 'max:20'],
+        ]);
+
+        $cartItem->update(['quantidade' => $data['quantidade']]);
+
+        return back();
+    }
+
+    public function destroy(Request $request, CartItem $cartItem): RedirectResponse
+    {
+        abort_unless($cartItem->user_id === $request->user()->id, 403);
+
+        $cartItem->delete();
+
+        return back()->with('status', 'Item removido do carrinho.');
+    }
+
+    public function clear(Request $request): RedirectResponse
+    {
+        CartItem::where('user_id', $request->user()->id)->delete();
+
+        return back()->with('status', 'Carrinho esvaziado.');
+    }
+
+    public function checkout(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        $data = $request->validate([
+            'forma_pagamento' => ['required', 'in:pix,cartao,boleto'],
+            'tipo_entrega' => ['required', 'in:retirada,entrega'],
+        ]);
+
+        $itens = CartItem::with('product')->where('user_id', $user->id)->get();
+
+        if ($itens->isEmpty()) {
+            return back()->withErrors(['carrinho' => 'Seu carrinho está vazio.']);
+        }
+
+        if ($data['tipo_entrega'] === 'entrega' && ! $user->endereco) {
+            return back()->withErrors(['tipo_entrega' => 'Cadastre um endereço no seu perfil antes de escolher entrega.']);
+        }
+
+        $order = DB::transaction(function () use ($user, $itens, $data) {
+            $order = Order::create([
+                'user_id' => $user->id,
+                'total' => $itens->sum(fn ($item) => $item->product->preco * $item->quantidade),
+                'status' => 'concluido',
+                'forma_pagamento' => $data['forma_pagamento'],
+                'tipo_entrega' => $data['tipo_entrega'],
+                'endereco_entrega' => $data['tipo_entrega'] === 'entrega' ? $user->endereco : null,
+            ]);
+
+            foreach ($itens as $item) {
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $item->product_id,
+                    'quantidade' => $item->quantidade,
+                    'preco_unitario' => $item->product->preco,
+                ]);
+            }
+
+            CartItem::where('user_id', $user->id)->delete();
+
+            return $order;
+        });
+
+        return redirect()->route('orders.index')->with('status', 'Pedido #'.$order->id.' realizado com sucesso!');
+    }
+}

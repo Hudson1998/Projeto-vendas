@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -15,6 +16,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'endereco',
     ];
 
     protected $hidden = [
@@ -28,5 +31,24 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function initials(): string
+    {
+        $partes = preg_split('/\s+/', trim($this->name));
+        $primeira = mb_substr($partes[0] ?? '', 0, 1);
+        $ultima = count($partes) > 1 ? mb_substr(end($partes), 0, 1) : '';
+
+        return mb_strtoupper($primeira.$ultima);
     }
 }
