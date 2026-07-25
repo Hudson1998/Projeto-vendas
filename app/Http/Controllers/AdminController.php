@@ -209,28 +209,10 @@ class AdminController extends Controller
         $inicioMes = now()->startOfMonth();
         $inicioAno = now()->startOfYear();
 
-        $caixa = $entradaPeriodo(null);
-        $custoLogisticaTotal = $custoLogisticaPadrao * $pedidosCountPeriodo(null);
-        $ganhoTotal = $caixa - $custoLogisticaTotal;
-        $margemLucro = $caixa > 0 ? ($ganhoTotal / $caixa) * 100 : 0;
-
-        $primeiroPedido = (clone $pedidosConcluidos)->oldest()->first();
-        $diasAtivos = $primeiroPedido ? max(1, now()->diffInDays($primeiroPedido->created_at)) : 1;
-        $projecaoAnual = ($ganhoTotal / $diasAtivos) * 365;
-
         return [
-            'caixa' => round($caixa, 2),
-            'faturamento' => round($caixa, 2),
-            'entradaHoje' => round($entradaPeriodo($hoje), 2),
-            'saidaHoje' => round($saidaPeriodo($hoje), 2),
             'ganhosDiarios' => round($entradaPeriodo($hoje) - $saidaPeriodo($hoje), 2),
             'ganhosMensais' => round($entradaPeriodo($inicioMes) - $saidaPeriodo($inicioMes), 2),
             'ganhosAnuais' => round($entradaPeriodo($inicioAno) - $saidaPeriodo($inicioAno), 2),
-            'margemLucro' => round($margemLucro, 1),
-            'custoLogistica' => round($custoLogisticaTotal, 2),
-            'projecaoAnual' => round($projecaoAnual, 2),
-            'totalPedidosConcluidos' => $pedidosCountPeriodo(null),
-            'custoLogisticaPadrao' => $custoLogisticaPadrao,
         ];
     }
 

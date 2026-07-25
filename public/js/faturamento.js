@@ -5,15 +5,9 @@
   const formatadorMoeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
   const camposMoeda = [
-    'caixa',
-    'faturamento',
-    'entradaHoje',
-    'saidaHoje',
     'ganhosDiarios',
     'ganhosMensais',
     'ganhosAnuais',
-    'custoLogistica',
-    'projecaoAnual',
   ];
 
   function escalar(numero) {
@@ -50,7 +44,7 @@
   }
 
   async function pollFaturamento() {
-    if (!document.getElementById('fat-caixa')) {
+    if (!document.getElementById('fat-ganhosDiarios')) {
       stopPolling();
       return;
     }
@@ -65,11 +59,6 @@
         const valor = data[campo] ?? 0;
         updateFaturamentoTile(campo, abreviarMoeda(valor), formatadorMoeda.format(valor));
       });
-
-      updateFaturamentoTile(
-        'margemLucro',
-        (data.margemLucro ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%'
-      );
     } catch (e) {
       // silencia falhas pontuais de rede e tenta novamente no próximo tick
     }
