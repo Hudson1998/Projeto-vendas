@@ -21,7 +21,7 @@
   <div class="wrap simple-header__inner">
     <a href="{{ route('home') }}" class="brand">
       <span class="brand__name">HR</span>
-      <span class="brand__tagline">Moda Feminina</span>
+      <span class="brand__tagline">Moda Online</span>
     </a>
     <a href="{{ route('home') }}" class="account-link">&larr; Voltar à loja</a>
   </div>

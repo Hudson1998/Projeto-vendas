@@ -29,7 +29,7 @@
           @foreach ($pedido->items as $item)
             <div class="order-card__item">
               <img src="{{ asset($item->product->imagem) }}" alt="{{ $item->product->nome }}">
-              <span>{{ $item->product->nome }} &times; {{ $item->quantidade }}</span>
+              <span>{{ $item->product->nome }}{{ $item->tamanho || $item->cor ? ' ('.collect([$item->tamanho, $item->cor])->filter()->implode(' · ').')' : '' }} &times; {{ $item->quantidade }}</span>
               <span>R$ {{ number_format($item->preco_unitario * $item->quantidade, 2, ',', '.') }}</span>
             </div>
           @endforeach
@@ -89,7 +89,7 @@
           @foreach ($pedido->items as $item)
             <div class="order-card__item">
               <img src="{{ asset($item->product->imagem) }}" alt="{{ $item->product->nome }}">
-              <span>{{ $item->product->nome }} &times; {{ $item->quantidade }}</span>
+              <span>{{ $item->product->nome }}{{ $item->tamanho || $item->cor ? ' ('.collect([$item->tamanho, $item->cor])->filter()->implode(' · ').')' : '' }} &times; {{ $item->quantidade }}</span>
               <span>R$ {{ number_format($item->preco_unitario * $item->quantidade, 2, ',', '.') }}</span>
             </div>
           @endforeach

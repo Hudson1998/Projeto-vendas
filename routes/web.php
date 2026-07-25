@@ -7,6 +7,7 @@ use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductReviewController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchLogController;
 use Illuminate\Support\Facades\Route;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [HomeController::class, 'index'])->middleware('log.visit')->name('home');
 
 Route::post('/buscas', [SearchLogController::class, 'store'])->name('buscas.store');
+
+Route::get('/produtos/{product}', [ProductController::class, 'show'])->name('products.show');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -39,6 +42,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/favoritos', [FavoriteController::class, 'index'])->name('favorites.index');
     Route::post('/favoritos/{product}', [FavoriteController::class, 'toggle'])->name('favorites.toggle');
 
+    Route::post('/produtos/{product}/avaliacoes', [ProductReviewController::class, 'store'])->name('products.reviews.store');
+
     Route::get('/perfil', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::post('/perfil', [ProfileController::class, 'update'])->name('profile.update');
 });
@@ -60,5 +65,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/produtos', [AdminController::class, 'produtos'])->name('produtos');
     Route::get('/produtos/novo', [ProductController::class, 'create'])->name('products.create');
     Route::post('/produtos', [ProductController::class, 'store'])->name('products.store');
+    Route::get('/produtos/{product}/editar', [ProductController::class, 'edit'])->name('products.edit');
+    Route::put('/produtos/{product}', [ProductController::class, 'update'])->name('products.update');
     Route::patch('/produtos/{product}/custo', [ProductController::class, 'updateCusto'])->name('products.custo');
 });

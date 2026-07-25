@@ -5,14 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class CartItem extends Model
+class ProductReview extends Model
 {
     protected $fillable = [
-        'user_id',
         'product_id',
-        'quantidade',
-        'tamanho',
-        'cor',
+        'user_id',
+        'avaliacao',
+        'comentario',
     ];
 
     public function product(): BelongsTo

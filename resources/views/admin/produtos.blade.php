@@ -22,7 +22,9 @@
           <th>Categoria</th>
           <th>Preço</th>
           <th>Custo</th>
+          <th>Estoque</th>
           <th>Cadastrado em</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -41,10 +43,12 @@
                 <button type="submit" class="link-btn">Salvar</button>
               </form>
             </td>
+            <td>{{ $produto->estoque }}</td>
             <td>{{ $produto->created_at->format('d/m/Y H:i') }}</td>
+            <td><a href="{{ route('admin.products.edit', $produto) }}" class="link-btn">Editar</a></td>
           </tr>
         @empty
-          <tr><td colspan="6" class="admin-table__empty">Nenhum produto cadastrado ainda.</td></tr>
+          <tr><td colspan="8" class="admin-table__empty">Nenhum produto cadastrado ainda.</td></tr>
         @endforelse
       </tbody>
     </table>

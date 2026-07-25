@@ -100,18 +100,19 @@
       .map(
         (item) => `
       <div class="product-card">
-        <div class="product-card__image-wrap">
-          <img class="product-card__image" src="${item.url}" alt="${item.nome}">
-          <button type="button" class="btn-favorite ${item.favoritado ? 'is-active' : ''}" data-id="${item.id}" title="Favoritar">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="${item.favoritado ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.6"><path d="M12 21s-7.5-4.6-10-9.1C.4 8.3 2 4.5 5.6 4c2-.3 3.9.6 6.4 3 2.5-2.4 4.4-3.3 6.4-3 3.6.5 5.2 4.3 3.6 7.9-2.5 4.5-10 9.1-10 9.1z"/></svg>
-          </button>
-        </div>
-        <div class="product-card__body">
-          <span class="product-card__category">${item.categoria}</span>
-          <span class="product-card__name">${item.nome}</span>
-          <span class="product-card__price">${item.preco}</span>
-          <button type="button" class="btn-buy" data-id="${item.id}">Adicionar ao carrinho</button>
-        </div>
+        <a href="/produtos/${item.id}" class="product-card__link">
+          <div class="product-card__image-wrap">
+            <img class="product-card__image" src="${item.url}" alt="${item.nome}">
+          </div>
+          <div class="product-card__body">
+            <span class="product-card__category">${item.categoria}</span>
+            <span class="product-card__name">${item.nome}</span>
+            <span class="product-card__price">${item.preco}</span>
+          </div>
+        </a>
+        <button type="button" class="btn-favorite ${item.favoritado ? 'is-active' : ''}" data-id="${item.id}" title="Favoritar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="${item.favoritado ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.6"><path d="M12 21s-7.5-4.6-10-9.1C.4 8.3 2 4.5 5.6 4c2-.3 3.9.6 6.4 3 2.5-2.4 4.4-3.3 6.4-3 3.6.5 5.2 4.3 3.6 7.9-2.5 4.5-10 9.1-10 9.1z"/></svg>
+        </button>
       </div>`
       )
       .join('');
@@ -139,38 +140,7 @@
     }).catch(() => {});
   }
 
-  function comprarOuFavoritar(e) {
-    const botaoComprar = e.target.closest('.btn-buy');
-    if (botaoComprar) {
-      if (!window.IS_AUTHENTICATED) {
-        window.ajaxNavigate ? window.ajaxNavigate(window.LOGIN_URL) : (window.location.href = window.LOGIN_URL);
-        return;
-      }
-
-      const productId = botaoComprar.dataset.id;
-      botaoComprar.disabled = true;
-
-      fetch(window.CART_STORE_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': csrfToken(),
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({ product_id: productId }),
-      })
-        .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
-        .then(({ ok, data }) => {
-          mostrarToast(ok ? data.message : 'Não foi possível adicionar ao carrinho.', ok ? 'sucesso' : 'erro');
-          if (ok) atualizarBadgeCarrinho(data.quantidadeCarrinho);
-        })
-        .catch(() => mostrarToast('Não foi possível adicionar ao carrinho.', 'erro'))
-        .finally(() => {
-          botaoComprar.disabled = false;
-        });
-      return;
-    }
-
+  function alternarFavorito(e) {
     const botaoFavorito = e.target.closest('.btn-favorite');
     if (botaoFavorito) {
       if (!window.IS_AUTHENTICATED) {
@@ -271,7 +241,7 @@
 
       const productGrid = document.getElementById('product-grid');
       if (productGrid && productGrid.contains(e.target)) {
-        comprarOuFavoritar(e);
+        alternarFavorito(e);
       }
     });
 

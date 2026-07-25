@@ -43,6 +43,11 @@
             <div class="cart-item__body">
               <span class="cart-item__category">{{ $item->product->categoria }}</span>
               <span class="cart-item__name">{{ $item->product->nome }}</span>
+              @if ($item->tamanho || $item->cor)
+                <span class="cart-item__variant">
+                  {{ collect([$item->tamanho, $item->cor])->filter()->implode(' · ') }}
+                </span>
+              @endif
               <span class="cart-item__price">R$ {{ number_format($item->product->preco, 2, ',', '.') }} / un.</span>
 
               <div class="cart-item__actions">

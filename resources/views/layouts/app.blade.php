@@ -31,7 +31,7 @@
   <div class="wrap site-header__inner">
     <a href="{{ route('home') }}" class="brand">
       <span class="brand__name">HR</span>
-      <span class="brand__tagline">Moda Feminina</span>
+      <span class="brand__tagline">Moda Online</span>
     </a>
 
     <div class="header-search">
@@ -106,7 +106,7 @@
   <div class="wrap footer__inner">
     <div class="footer__brand">
       <span class="footer__brand-name">HR</span>
-      <span class="footer__brand-tagline">Moda Feminina</span>
+      <span class="footer__brand-tagline">Moda Online</span>
     </div>
     <div class="footer__social">
       <a href="#" title="Instagram">

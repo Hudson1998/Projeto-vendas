@@ -33,13 +33,42 @@ class CartController extends Controller
     {
         $data = $request->validate([
             'product_id' => ['required', 'integer', 'exists:products,id'],
+            'quantidade' => ['nullable', 'integer', 'min:1', 'max:20'],
+            'tamanho' => ['nullable', 'string', 'max:60'],
+            'cor' => ['nullable', 'string', 'max:60'],
         ]);
+
+        $product = Product::findOrFail($data['product_id']);
+        $quantidadeDesejada = $data['quantidade'] ?? 1;
+
+        if (!empty($product->tamanhos) && !in_array($data['tamanho'] ?? null, $product->tamanhos, true)) {
+            return response()->json(['message' => 'Selecione um tamanho válido.'], 422);
+        }
+
+        if (!empty($product->cores)) {
+            $coresValidas = array_column($product->cores, 'nome');
+            if (!in_array($data['cor'] ?? null, $coresValidas, true)) {
+                return response()->json(['message' => 'Selecione uma cor válida.'], 422);
+            }
+        }
+
+        if ($product->estoque < 1) {
+            return response()->json(['message' => 'Peça esgotada.'], 422);
+        }
 
         $item = CartItem::firstOrNew([
             'user_id' => $request->user()->id,
-            'product_id' => $data['product_id'],
+            'product_id' => $product->id,
+            'tamanho' => $data['tamanho'] ?? null,
+            'cor' => $data['cor'] ?? null,
         ]);
-        $item->quantidade = ($item->quantidade ?? 0) + 1;
+
+        $novaQuantidade = ($item->quantidade ?? 0) + $quantidadeDesejada;
+        if ($novaQuantidade > $product->estoque) {
+            return response()->json(['message' => 'Quantidade indisponível em estoque.'], 422);
+        }
+
+        $item->quantidade = $novaQuantidade;
         $item->save();
 
         $quantidadeTotal = CartItem::where('user_id', $request->user()->id)->sum('quantidade');
@@ -98,6 +127,12 @@ class CartController extends Controller
             return back()->withErrors(['tipo_entrega' => 'Cadastre um endereço no seu perfil antes de escolher entrega.']);
         }
 
+        foreach ($itens as $item) {
+            if ($item->quantidade > $item->product->estoque) {
+                return back()->withErrors(['carrinho' => 'A peça "'.$item->product->nome.'" não tem mais estoque suficiente.']);
+            }
+        }
+
         $order = DB::transaction(function () use ($user, $itens, $data) {
             $order = Order::create([
                 'user_id' => $user->id,
@@ -114,7 +149,11 @@ class CartController extends Controller
                     'product_id' => $item->product_id,
                     'quantidade' => $item->quantidade,
                     'preco_unitario' => $item->product->preco,
+                    'tamanho' => $item->tamanho,
+                    'cor' => $item->cor,
                 ]);
+
+                $item->product->decrement('estoque', $item->quantidade);
             }
 
             CartItem::where('user_id', $user->id)->delete();
