@@ -26,6 +26,14 @@
   $quantidadeCarrinho = auth()->check()
       ? \App\Models\CartItem::where('user_id', auth()->id())->sum('quantidade')
       : 0;
+
+  $notificacoes = auth()->check()
+      ? \App\Models\Order::where('user_id', auth()->id())
+          ->whereIn('status', ['concluido', 'cancelado'])
+          ->latest('updated_at')
+          ->take(5)
+          ->get()
+      : collect();
 @endphp
 <header class="site-header">
   <div class="wrap site-header__inner">
@@ -65,6 +73,26 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
           <span class="cart-icon__badge" id="cart-badge" @if($quantidadeCarrinho < 1) style="display:none" @endif>{{ $quantidadeCarrinho }}</span>
         </a>
+
+        <div class="notification-dropdown" id="notification-dropdown">
+          <button type="button" id="notification-toggle" class="notification-bell" aria-haspopup="menu" aria-expanded="false" title="Notificações">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            @if ($notificacoes->isNotEmpty())
+              <span class="notification-bell__dot"></span>
+            @endif
+          </button>
+          <div class="notification-menu" id="notification-menu" role="menu">
+            <div class="notification-menu__header">Notificações</div>
+            @forelse ($notificacoes as $pedido)
+              <div class="notification-menu__item">
+                <span class="notification-menu__text">Pedido #{{ $pedido->id }} foi {{ $pedido->status === 'concluido' ? 'concluído' : 'cancelado' }}</span>
+                <span class="notification-menu__date">{{ $pedido->updated_at->format('d/m/Y') }}</span>
+              </div>
+            @empty
+              <div class="notification-menu__empty">Nenhuma notificação no momento.</div>
+            @endforelse
+          </div>
+        </div>
 
         <div class="profile-dropdown" id="profile-dropdown">
           <button type="button" id="profile-toggle" class="profile-avatar" aria-haspopup="menu" aria-expanded="false">

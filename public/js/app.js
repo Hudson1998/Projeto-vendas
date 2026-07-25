@@ -231,6 +231,18 @@
         if (t) t.setAttribute('aria-expanded', 'false');
       }
 
+      const notificationToggle = e.target.closest('#notification-toggle');
+      const notificationDropdown = document.getElementById('notification-dropdown');
+      if (notificationToggle && notificationDropdown) {
+        e.stopPropagation();
+        const isOpen = notificationDropdown.classList.toggle('is-open');
+        notificationToggle.setAttribute('aria-expanded', String(isOpen));
+      } else if (notificationDropdown && notificationDropdown.classList.contains('is-open') && !notificationDropdown.contains(e.target)) {
+        notificationDropdown.classList.remove('is-open');
+        const t = document.getElementById('notification-toggle');
+        if (t) t.setAttribute('aria-expanded', 'false');
+      }
+
       const searchIconBtn = e.target.closest('#search-icon');
       if (searchIconBtn) {
         const input = document.getElementById('search-input');
@@ -258,6 +270,12 @@
         pd.classList.remove('is-open');
         const t2 = document.getElementById('profile-toggle');
         if (t2) t2.setAttribute('aria-expanded', 'false');
+      }
+      const nd = document.getElementById('notification-dropdown');
+      if (nd) {
+        nd.classList.remove('is-open');
+        const t3 = document.getElementById('notification-toggle');
+        if (t3) t3.setAttribute('aria-expanded', 'false');
       }
     });
 
