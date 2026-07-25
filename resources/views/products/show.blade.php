@@ -33,9 +33,15 @@
         </div>
       @endif
 
-      <p class="product-detail__stock {{ $product->estoque > 0 ? '' : 'product-detail__stock--esgotado' }}">
-        @if ($product->estoque > 0)
-          Em estoque: {{ $product->estoque }} {{ $product->estoque === 1 ? 'unidade' : 'unidades' }}
+      @php
+        $estoqueTotal = $product->estoqueTotal();
+        $tamanhos = $product->tamanhosDisponiveis();
+        $cores = $product->coresDisponiveis();
+      @endphp
+
+      <p class="product-detail__stock {{ $estoqueTotal > 0 ? '' : 'product-detail__stock--esgotado' }}" id="produto-estoque-texto">
+        @if ($estoqueTotal > 0)
+          Em estoque: {{ $estoqueTotal }} {{ $estoqueTotal === 1 ? 'unidade' : 'unidades' }}
         @else
           Esgotado
         @endif
@@ -45,13 +51,13 @@
         <p class="product-detail__description">{{ $product->descricao }}</p>
       @endif
 
-      @if ($product->estoque > 0)
-        <form id="add-to-cart-form" data-no-ajax>
-          @if (!empty($product->tamanhos))
+      @if ($estoqueTotal > 0)
+        <form id="add-to-cart-form" data-no-ajax data-variantes='@json($product->variants->map(fn ($v) => ["tamanho" => $v->tamanho, "cor" => $v->cor, "estoque" => $v->estoque]))'>
+          @if (!empty($tamanhos))
             <div class="field">
               <label>Tamanho</label>
               <div class="radio-group radio-group--inline">
-                @foreach ($product->tamanhos as $tamanho)
+                @foreach ($tamanhos as $tamanho)
                   <label class="radio">
                     <input type="radio" name="tamanho" value="{{ $tamanho }}" {{ $loop->first ? 'checked' : '' }}>
                     {{ $tamanho }}
@@ -61,11 +67,11 @@
             </div>
           @endif
 
-          @if (!empty($product->cores))
+          @if (!empty($cores))
             <div class="field">
               <label>Cor</label>
               <div class="radio-group radio-group--inline">
-                @foreach ($product->cores as $cor)
+                @foreach ($cores as $cor)
                   <label class="radio">
                     <input type="radio" name="cor" value="{{ $cor['nome'] }}" {{ $loop->first ? 'checked' : '' }}>
                     <span class="color-swatch" style="background: {{ $cor['hex'] }};"></span>
@@ -76,9 +82,11 @@
             </div>
           @endif
 
+          <p class="product-form-card__hint" id="produto-variante-estoque"></p>
+
           <div class="field">
             <label for="quantidade">Quantidade</label>
-            <input type="number" id="quantidade" name="quantidade" min="1" max="{{ min(20, $product->estoque) }}" value="1">
+            <input type="number" id="quantidade" name="quantidade" min="1" max="{{ min(20, $estoqueTotal) }}" value="1">
           </div>
 
           <button type="submit" class="btn btn-primary btn-block" id="add-to-cart-btn">Adicionar ao carrinho</button>
@@ -138,6 +146,47 @@
 (function () {
   var form = document.getElementById('add-to-cart-form');
   if (!form) return;
+
+  var variantes = JSON.parse(form.dataset.variantes || '[]');
+  var quantidadeInput = form.querySelector('input[name="quantidade"]');
+  var estoqueInfo = document.getElementById('produto-variante-estoque');
+  var botaoAdicionar = document.getElementById('add-to-cart-btn');
+
+  function varianteSelecionada() {
+    var tamanho = form.querySelector('input[name="tamanho"]:checked');
+    var cor = form.querySelector('input[name="cor"]:checked');
+    var tamanhoValor = tamanho ? tamanho.value : null;
+    var corValor = cor ? cor.value : null;
+
+    return variantes.find(function (v) {
+      return (v.tamanho || null) === tamanhoValor && (v.cor || null) === corValor;
+    });
+  }
+
+  function atualizarDisponibilidade() {
+    if (!variantes.length) return;
+
+    var variante = varianteSelecionada();
+    var estoque = variante ? variante.estoque : 0;
+
+    if (quantidadeInput) {
+      quantidadeInput.max = Math.max(1, Math.min(20, estoque));
+      if (Number(quantidadeInput.value) > estoque) quantidadeInput.value = Math.max(1, estoque);
+    }
+
+    if (estoqueInfo) {
+      estoqueInfo.textContent = estoque > 0
+        ? estoque + ' ' + (estoque === 1 ? 'unidade disponível nessa combinação.' : 'unidades disponíveis nessa combinação.')
+        : 'Combinação esgotada.';
+    }
+
+    if (botaoAdicionar) botaoAdicionar.disabled = estoque < 1;
+  }
+
+  form.querySelectorAll('input[name="tamanho"], input[name="cor"]').forEach(function (input) {
+    input.addEventListener('change', atualizarDisponibilidade);
+  });
+  atualizarDisponibilidade();
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();

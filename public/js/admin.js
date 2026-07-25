@@ -11,11 +11,29 @@
     'totalPedidos',
   ];
 
+  function abreviarNumero(valor) {
+    const numero = Number(valor) || 0;
+
+    if (numero >= 1000000) return formatarComSufixo(numero / 1000000) + 'M';
+    if (numero >= 1000) {
+      if (Math.round((numero / 1000) * 10) / 10 >= 1000) return formatarComSufixo(numero / 1000000) + 'M';
+      return formatarComSufixo(numero / 1000) + 'K';
+    }
+    return String(Math.trunc(numero));
+  }
+
+  function formatarComSufixo(valor) {
+    const arredondado = Math.round(valor * 10) / 10;
+    return String(arredondado).replace('.', ',');
+  }
+
   function updateStatTile(key, value) {
     const el = document.getElementById('stat-' + key);
     if (!el) return;
-    if (el.textContent !== String(value)) {
-      el.textContent = value;
+    const texto = abreviarNumero(value);
+    if (el.textContent !== texto) {
+      el.textContent = texto;
+      el.title = value;
       el.classList.remove('is-pulsing');
       void el.offsetWidth;
       el.classList.add('is-pulsing');
@@ -44,7 +62,7 @@
     }
 
     list.innerHTML = rows
-      .map((row) => `<li><span>${row.label}</span><span class="admin-rank__count">${row.count}</span></li>`)
+      .map((row) => `<li><span>${row.label}</span><span class="admin-rank__count" title="${row.count}">${abreviarNumero(row.count)}</span></li>`)
       .join('');
   }
 

@@ -145,7 +145,7 @@ class AdminController extends Controller
 
     public function produtos(): View
     {
-        $produtos = Product::orderBy('categoria')->orderBy('nome')->get();
+        $produtos = Product::with('variants')->orderBy('categoria')->orderBy('nome')->get();
 
         return view('admin.produtos', ['produtos' => $produtos]);
     }
@@ -203,29 +203,15 @@ class AdminController extends Controller
             return $query->count();
         };
 
-        $custoProdutosPeriodo = function (?Carbon $inicio = null) {
-            $query = DB::table('order_items')
-                ->join('orders', 'orders.id', '=', 'order_items.order_id')
-                ->join('products', 'products.id', '=', 'order_items.product_id')
-                ->where('orders.status', 'concluido');
-
-            if ($inicio) {
-                $query->where('orders.created_at', '>=', $inicio);
-            }
-
-            return (float) ($query->sum(DB::raw('order_items.quantidade * products.custo')) ?? 0);
-        };
-
-        $saidaPeriodo = fn (?Carbon $inicio = null) => $custoProdutosPeriodo($inicio) + ($custoLogisticaPadrao * $pedidosCountPeriodo($inicio));
+        $saidaPeriodo = fn (?Carbon $inicio = null) => $custoLogisticaPadrao * $pedidosCountPeriodo($inicio);
 
         $hoje = now()->startOfDay();
         $inicioMes = now()->startOfMonth();
         $inicioAno = now()->startOfYear();
 
         $caixa = $entradaPeriodo(null);
-        $custoProdutosTotal = $custoProdutosPeriodo(null);
         $custoLogisticaTotal = $custoLogisticaPadrao * $pedidosCountPeriodo(null);
-        $ganhoTotal = $caixa - $custoProdutosTotal - $custoLogisticaTotal;
+        $ganhoTotal = $caixa - $custoLogisticaTotal;
         $margemLucro = $caixa > 0 ? ($ganhoTotal / $caixa) * 100 : 0;
 
         $primeiroPedido = (clone $pedidosConcluidos)->oldest()->first();
@@ -241,7 +227,6 @@ class AdminController extends Controller
             'ganhosMensais' => round($entradaPeriodo($inicioMes) - $saidaPeriodo($inicioMes), 2),
             'ganhosAnuais' => round($entradaPeriodo($inicioAno) - $saidaPeriodo($inicioAno), 2),
             'margemLucro' => round($margemLucro, 1),
-            'custoProdutos' => round($custoProdutosTotal, 2),
             'custoLogistica' => round($custoLogisticaTotal, 2),
             'projecaoAnual' => round($projecaoAnual, 2),
             'totalPedidosConcluidos' => $pedidosCountPeriodo(null),

@@ -18,15 +18,4 @@
   </div>
 </section>
 
-<section id="contato" class="section--dark">
-  <div class="wrap contact">
-    <h2 class="contact__title">Fale com a gente</h2>
-    <p class="contact__text">Atendimento personalizado pelo WhatsApp e novidades diárias no Instagram.</p>
-    <div class="actions">
-      <a href="#" class="btn btn-primary">WhatsApp</a>
-      <a href="#" class="btn btn-outline">@@hrmodafeminina</a>
-    </div>
-  </div>
-</section>
-
 @endsection

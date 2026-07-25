@@ -38,33 +38,30 @@ class CartController extends Controller
             'cor' => ['nullable', 'string', 'max:60'],
         ]);
 
-        $product = Product::findOrFail($data['product_id']);
+        $product = Product::with('variants')->findOrFail($data['product_id']);
         $quantidadeDesejada = $data['quantidade'] ?? 1;
+        $tamanho = $data['tamanho'] ?? null;
+        $cor = $data['cor'] ?? null;
 
-        if (!empty($product->tamanhos) && !in_array($data['tamanho'] ?? null, $product->tamanhos, true)) {
-            return response()->json(['message' => 'Selecione um tamanho válido.'], 422);
+        $variante = $product->variantePara($tamanho, $cor);
+
+        if (!$variante) {
+            return response()->json(['message' => 'Selecione um tamanho/cor válido.'], 422);
         }
 
-        if (!empty($product->cores)) {
-            $coresValidas = array_column($product->cores, 'nome');
-            if (!in_array($data['cor'] ?? null, $coresValidas, true)) {
-                return response()->json(['message' => 'Selecione uma cor válida.'], 422);
-            }
-        }
-
-        if ($product->estoque < 1) {
+        if ($variante->estoque < 1) {
             return response()->json(['message' => 'Peça esgotada.'], 422);
         }
 
         $item = CartItem::firstOrNew([
             'user_id' => $request->user()->id,
             'product_id' => $product->id,
-            'tamanho' => $data['tamanho'] ?? null,
-            'cor' => $data['cor'] ?? null,
+            'tamanho' => $tamanho,
+            'cor' => $cor,
         ]);
 
         $novaQuantidade = ($item->quantidade ?? 0) + $quantidadeDesejada;
-        if ($novaQuantidade > $product->estoque) {
+        if ($novaQuantidade > $variante->estoque) {
             return response()->json(['message' => 'Quantidade indisponível em estoque.'], 422);
         }
 
@@ -117,7 +114,7 @@ class CartController extends Controller
             'tipo_entrega' => ['required', 'in:retirada,entrega'],
         ]);
 
-        $itens = CartItem::with('product')->where('user_id', $user->id)->get();
+        $itens = CartItem::with('product.variants')->where('user_id', $user->id)->get();
 
         if ($itens->isEmpty()) {
             return back()->withErrors(['carrinho' => 'Seu carrinho está vazio.']);
@@ -128,7 +125,9 @@ class CartController extends Controller
         }
 
         foreach ($itens as $item) {
-            if ($item->quantidade > $item->product->estoque) {
+            $variante = $item->product->variantePara($item->tamanho, $item->cor);
+
+            if (! $variante || $item->quantidade > $variante->estoque) {
                 return back()->withErrors(['carrinho' => 'A peça "'.$item->product->nome.'" não tem mais estoque suficiente.']);
             }
         }
@@ -153,7 +152,7 @@ class CartController extends Controller
                     'cor' => $item->cor,
                 ]);
 
-                $item->product->decrement('estoque', $item->quantidade);
+                $item->product->variantePara($item->tamanho, $item->cor)->decrement('estoque', $item->quantidade);
             }
 
             CartItem::where('user_id', $user->id)->delete();

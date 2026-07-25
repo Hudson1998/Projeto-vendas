@@ -12,27 +12,27 @@
   <div class="stat-grid">
     <div class="stat-tile">
       <span class="stat-tile__label">Acessos totais</span>
-      <span class="stat-tile__value" id="stat-totalVisitas">{{ $totalVisitas }}</span>
+      <span class="stat-tile__value" id="stat-totalVisitas" title="{{ $totalVisitas }}">{{ \App\Support\NumberAbbreviator::abreviar($totalVisitas) }}</span>
     </div>
     <div class="stat-tile">
       <span class="stat-tile__label">Acessos hoje</span>
-      <span class="stat-tile__value" id="stat-visitasHoje">{{ $visitasHoje }}</span>
+      <span class="stat-tile__value" id="stat-visitasHoje" title="{{ $visitasHoje }}">{{ \App\Support\NumberAbbreviator::abreviar($visitasHoje) }}</span>
     </div>
     <div class="stat-tile">
       <span class="stat-tile__label">Visitantes únicos</span>
-      <span class="stat-tile__value" id="stat-visitantesUnicos">{{ $visitantesUnicos }}</span>
+      <span class="stat-tile__value" id="stat-visitantesUnicos" title="{{ $visitantesUnicos }}">{{ \App\Support\NumberAbbreviator::abreviar($visitantesUnicos) }}</span>
     </div>
     <div class="stat-tile">
       <span class="stat-tile__label">Clientes cadastrados</span>
-      <span class="stat-tile__value" id="stat-totalCadastrados">{{ $totalCadastrados }}</span>
+      <span class="stat-tile__value" id="stat-totalCadastrados" title="{{ $totalCadastrados }}">{{ \App\Support\NumberAbbreviator::abreviar($totalCadastrados) }}</span>
     </div>
     <div class="stat-tile">
       <span class="stat-tile__label">Cadastros hoje</span>
-      <span class="stat-tile__value" id="stat-cadastrosHoje">{{ $cadastrosHoje }}</span>
+      <span class="stat-tile__value" id="stat-cadastrosHoje" title="{{ $cadastrosHoje }}">{{ \App\Support\NumberAbbreviator::abreviar($cadastrosHoje) }}</span>
     </div>
     <div class="stat-tile">
       <span class="stat-tile__label">Pedidos realizados</span>
-      <span class="stat-tile__value" id="stat-totalPedidos">{{ $totalPedidos }}</span>
+      <span class="stat-tile__value" id="stat-totalPedidos" title="{{ $totalPedidos }}">{{ \App\Support\NumberAbbreviator::abreviar($totalPedidos) }}</span>
     </div>
   </div>
 
@@ -73,7 +73,7 @@
       <h2 class="admin-panel__title">Termos mais buscados</h2>
       <ul class="admin-rank" id="list-termosMaisBuscados">
         @forelse ($termosMaisBuscados as $t)
-          <li><span>{{ $t->termo }}</span><span class="admin-rank__count">{{ $t->total }}</span></li>
+          <li><span>{{ $t->termo }}</span><span class="admin-rank__count" title="{{ $t->total }}">{{ \App\Support\NumberAbbreviator::abreviar($t->total) }}</span></li>
         @empty
           <li class="admin-table__empty">Nenhuma busca registrada ainda.</li>
         @endforelse
@@ -84,7 +84,7 @@
       <h2 class="admin-panel__title">Produtos mais vendidos</h2>
       <ul class="admin-rank" id="list-produtosMaisVendidos">
         @forelse ($produtosMaisVendidos as $p)
-          <li><span>{{ $p->nome }}</span><span class="admin-rank__count">{{ $p->total_vendido }}</span></li>
+          <li><span>{{ $p->nome }}</span><span class="admin-rank__count" title="{{ $p->total_vendido }}">{{ \App\Support\NumberAbbreviator::abreviar($p->total_vendido) }}</span></li>
         @empty
           <li class="admin-table__empty">Nenhuma venda registrada ainda.</li>
         @endforelse

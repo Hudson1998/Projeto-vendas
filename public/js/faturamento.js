@@ -12,16 +12,37 @@
     'ganhosDiarios',
     'ganhosMensais',
     'ganhosAnuais',
-    'custoProdutos',
     'custoLogistica',
     'projecaoAnual',
   ];
 
-  function updateFaturamentoTile(id, texto) {
+  function escalar(numero) {
+    if (numero >= 1000000) return { escalado: numero / 1000000, sufixo: 'M' };
+    if (numero >= 1000) {
+      if (Math.round((numero / 1000) * 10) / 10 >= 1000) return { escalado: numero / 1000000, sufixo: 'M' };
+      return { escalado: numero / 1000, sufixo: 'K' };
+    }
+    return { escalado: numero, sufixo: '' };
+  }
+
+  function formatarComSufixo(valor) {
+    const arredondado = Math.round(valor * 10) / 10;
+    return String(arredondado).replace('.', ',');
+  }
+
+  function abreviarMoeda(valor) {
+    const numero = Number(valor) || 0;
+    const { escalado, sufixo } = escalar(numero);
+    if (!sufixo) return formatadorMoeda.format(numero);
+    return 'R$ ' + formatarComSufixo(escalado) + sufixo;
+  }
+
+  function updateFaturamentoTile(id, texto, tituloCompleto) {
     const el = document.getElementById('fat-' + id);
     if (!el) return;
     if (el.textContent !== texto) {
       el.textContent = texto;
+      if (tituloCompleto !== undefined) el.title = tituloCompleto;
       el.classList.remove('is-pulsing');
       void el.offsetWidth;
       el.classList.add('is-pulsing');
@@ -41,7 +62,8 @@
       const data = await response.json();
 
       camposMoeda.forEach((campo) => {
-        updateFaturamentoTile(campo, formatadorMoeda.format(data[campo] ?? 0));
+        const valor = data[campo] ?? 0;
+        updateFaturamentoTile(campo, abreviarMoeda(valor), formatadorMoeda.format(valor));
       });
 
       updateFaturamentoTile(

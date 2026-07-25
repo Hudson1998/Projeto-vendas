@@ -67,5 +67,4 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/produtos', [ProductController::class, 'store'])->name('products.store');
     Route::get('/produtos/{product}/editar', [ProductController::class, 'edit'])->name('products.edit');
     Route::put('/produtos/{product}', [ProductController::class, 'update'])->name('products.update');
-    Route::patch('/produtos/{product}/custo', [ProductController::class, 'updateCusto'])->name('products.custo');
 });

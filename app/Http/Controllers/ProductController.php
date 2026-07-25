@@ -5,12 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ProductController extends Controller
 {
     public function show(Product $product): View
     {
+        $product->load('variants');
+
         $reviews = $product->reviews()->with('user')->latest()->get();
 
         $user = auth()->user();
@@ -32,34 +35,38 @@ class ProductController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validateProduct($request, true);
+        $variantes = $this->parseVariantes($request);
 
         $foto = $request->file('foto');
         $nomeArquivo = uniqid('produto_').'.'.$foto->getClientOriginalExtension();
         $foto->move(public_path('uploads'), $nomeArquivo);
 
-        Product::create([
+        $product = Product::create([
             'nome' => $data['nome'],
             'categoria' => $data['categoria'],
             'preco' => $data['preco'],
-            'custo' => $data['custo'] ?? 0,
             'imagem' => 'uploads/'.$nomeArquivo,
             'descricao' => $data['descricao'] ?? null,
-            'estoque' => $data['estoque'],
-            'tamanhos' => $this->parseTamanhos($request),
-            'cores' => $this->parseCores($request),
         ]);
+
+        foreach ($variantes as $variante) {
+            $product->variants()->create($variante);
+        }
 
         return redirect()->route('admin.products.create')->with('status', 'Peça cadastrada com sucesso!');
     }
 
     public function edit(Product $product): View
     {
+        $product->load('variants');
+
         return view('admin.products.edit', ['product' => $product]);
     }
 
     public function update(Request $request, Product $product): RedirectResponse
     {
         $data = $this->validateProduct($request, false);
+        $variantes = $this->parseVariantes($request);
 
         $imagem = $product->imagem;
         if ($request->hasFile('foto')) {
@@ -73,26 +80,16 @@ class ProductController extends Controller
             'nome' => $data['nome'],
             'categoria' => $data['categoria'],
             'preco' => $data['preco'],
-            'custo' => $data['custo'] ?? 0,
             'imagem' => $imagem,
             'descricao' => $data['descricao'] ?? null,
-            'estoque' => $data['estoque'],
-            'tamanhos' => $this->parseTamanhos($request),
-            'cores' => $this->parseCores($request),
         ]);
+
+        $product->variants()->delete();
+        foreach ($variantes as $variante) {
+            $product->variants()->create($variante);
+        }
 
         return redirect()->route('admin.produtos')->with('status', 'Peça "'.$product->nome.'" atualizada com sucesso!');
-    }
-
-    public function updateCusto(Request $request, Product $product): RedirectResponse
-    {
-        $data = $request->validate([
-            'custo' => ['required', 'numeric', 'min:0'],
-        ]);
-
-        $product->update(['custo' => $data['custo']]);
-
-        return back()->with('status', 'Custo de "'.$product->nome.'" atualizado.');
     }
 
     private function validateProduct(Request $request, bool $fotoRequired): array
@@ -101,43 +98,56 @@ class ProductController extends Controller
             'nome' => ['required', 'string', 'max:255'],
             'categoria' => ['required', 'string', 'max:255'],
             'preco' => ['required', 'numeric', 'min:0'],
-            'custo' => ['nullable', 'numeric', 'min:0'],
             'descricao' => ['nullable', 'string', 'max:5000'],
-            'estoque' => ['required', 'integer', 'min:0'],
             'foto' => [$fotoRequired ? 'required' : 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
-            'tamanhos' => ['nullable', 'string', 'max:255'],
-            'cores_nome' => ['nullable', 'array'],
-            'cores_nome.*' => ['nullable', 'string', 'max:60'],
-            'cores_hex' => ['nullable', 'array'],
-            'cores_hex.*' => ['nullable', 'string', 'max:20'],
+            'variantes_tamanho' => ['nullable', 'array'],
+            'variantes_tamanho.*' => ['nullable', 'string', 'max:60'],
+            'variantes_cor' => ['nullable', 'array'],
+            'variantes_cor.*' => ['nullable', 'string', 'max:60'],
+            'variantes_cor_hex' => ['nullable', 'array'],
+            'variantes_cor_hex.*' => ['nullable', 'string', 'max:20'],
+            'variantes_estoque' => ['nullable', 'array'],
+            'variantes_estoque.*' => ['nullable', 'integer', 'min:0'],
         ]);
     }
 
-    private function parseTamanhos(Request $request): ?array
+    /**
+     * @return array<int, array{tamanho: ?string, cor: ?string, cor_hex: ?string, estoque: int}>
+     */
+    private function parseVariantes(Request $request): array
     {
-        $bruto = (string) $request->input('tamanhos', '');
-        $tamanhos = array_values(array_filter(array_map('trim', explode(',', $bruto))));
+        $tamanhos = $request->input('variantes_tamanho', []);
+        $cores = $request->input('variantes_cor', []);
+        $hexes = $request->input('variantes_cor_hex', []);
+        $estoques = $request->input('variantes_estoque', []);
 
-        return $tamanhos ?: null;
-    }
+        $linhas = max(count($tamanhos), count($cores), count($estoques));
+        $variantes = [];
 
-    private function parseCores(Request $request): ?array
-    {
-        $nomes = $request->input('cores_nome', []);
-        $hexes = $request->input('cores_hex', []);
+        for ($i = 0; $i < $linhas; $i++) {
+            $tamanho = trim((string) ($tamanhos[$i] ?? '')) ?: null;
+            $cor = trim((string) ($cores[$i] ?? '')) ?: null;
+            $hex = trim((string) ($hexes[$i] ?? '')) ?: null;
+            $estoqueBruto = $estoques[$i] ?? null;
 
-        $cores = [];
-        foreach ($nomes as $i => $nome) {
-            $nome = trim((string) $nome);
-            if ($nome === '') {
+            if ($tamanho === null && $cor === null && ($estoqueBruto === null || $estoqueBruto === '')) {
                 continue;
             }
-            $cores[] = [
-                'nome' => $nome,
-                'hex' => $hexes[$i] ?? '#000000',
+
+            $variantes[] = [
+                'tamanho' => $tamanho,
+                'cor' => $cor,
+                'cor_hex' => $cor !== null ? ($hex ?: '#000000') : null,
+                'estoque' => (int) ($estoqueBruto ?? 0),
             ];
         }
 
-        return $cores ?: null;
+        if (empty($variantes)) {
+            throw ValidationException::withMessages([
+                'variantes_estoque' => 'Cadastre ao menos uma variante com estoque.',
+            ]);
+        }
+
+        return $variantes;
     }
 }

@@ -1,14 +1,26 @@
 @php
-  $coresIniciais = [];
-  if (old('cores_nome')) {
-      foreach (old('cores_nome') as $i => $nome) {
-          $coresIniciais[] = ['nome' => $nome, 'hex' => old('cores_hex')[$i] ?? '#000000'];
+  $variantesIniciais = [];
+  if (old('variantes_tamanho')) {
+      foreach (old('variantes_tamanho') as $i => $tamanho) {
+          $variantesIniciais[] = [
+              'tamanho' => $tamanho,
+              'cor' => old('variantes_cor')[$i] ?? '',
+              'cor_hex' => old('variantes_cor_hex')[$i] ?? '#000000',
+              'estoque' => old('variantes_estoque')[$i] ?? 0,
+          ];
       }
-  } elseif ($product && $product->cores) {
-      $coresIniciais = $product->cores;
+  } elseif ($product && $product->variants->isNotEmpty()) {
+      foreach ($product->variants as $variante) {
+          $variantesIniciais[] = [
+              'tamanho' => $variante->tamanho,
+              'cor' => $variante->cor,
+              'cor_hex' => $variante->cor_hex ?? '#000000',
+              'estoque' => $variante->estoque,
+          ];
+      }
   }
-  if (empty($coresIniciais)) {
-      $coresIniciais = [['nome' => '', 'hex' => '#000000']];
+  if (empty($variantesIniciais)) {
+      $variantesIniciais = [['tamanho' => '', 'cor' => '', 'cor_hex' => '#000000', 'estoque' => 0]];
   }
 @endphp
 
@@ -33,37 +45,25 @@
 </div>
 
 <div class="field">
-  <label for="custo">Custo de compra (R$)</label>
-  <input type="number" id="custo" name="custo" value="{{ old('custo', $product->custo ?? '') }}" step="0.01" min="0" placeholder="0,00">
-</div>
-
-<div class="field">
-  <label for="estoque">Estoque (unidades)</label>
-  <input type="number" id="estoque" name="estoque" value="{{ old('estoque', $product->estoque ?? 0) }}" step="1" min="0" required>
-</div>
-
-<div class="field">
   <label for="descricao">Descrição da peça</label>
   <textarea id="descricao" name="descricao" placeholder="Detalhes de tecido, caimento, cuidados...">{{ old('descricao', $product->descricao ?? '') }}</textarea>
 </div>
 
 <div class="field">
-  <label for="tamanhos">Tamanhos disponíveis</label>
-  <input type="text" id="tamanhos" name="tamanhos" value="{{ old('tamanhos', $product && $product->tamanhos ? implode(', ', $product->tamanhos) : '') }}" placeholder="P, M, G, GG">
-</div>
-
-<div class="field">
-  <label>Cores disponíveis</label>
-  <div id="cores-repeater" class="color-repeater">
-    @foreach ($coresIniciais as $cor)
-      <div class="color-repeater__row">
-        <input type="text" name="cores_nome[]" value="{{ $cor['nome'] }}" placeholder="Nome da cor (ex: Preto)">
-        <input type="color" name="cores_hex[]" value="{{ $cor['hex'] }}">
-        <button type="button" class="link-btn link-btn--danger color-repeater__remove">Remover</button>
+  <label>Variantes (tamanho / cor / estoque)</label>
+  <p class="product-form-card__hint">Cadastre uma linha para cada combinação vendida. Deixe tamanho e/ou cor em branco se a peça não variar nesse aspecto.</p>
+  <div id="variantes-repeater" class="variant-repeater">
+    @foreach ($variantesIniciais as $variante)
+      <div class="variant-repeater__row">
+        <input type="text" name="variantes_tamanho[]" value="{{ $variante['tamanho'] }}" placeholder="Tamanho (ex: P)">
+        <input type="text" name="variantes_cor[]" value="{{ $variante['cor'] }}" placeholder="Cor (ex: Preto)">
+        <input type="color" name="variantes_cor_hex[]" value="{{ $variante['cor_hex'] }}">
+        <input type="number" name="variantes_estoque[]" value="{{ $variante['estoque'] }}" step="1" min="0" placeholder="Estoque">
+        <button type="button" class="link-btn link-btn--danger variant-repeater__remove">Remover</button>
       </div>
     @endforeach
   </div>
-  <button type="button" id="cores-add" class="link-btn">+ Adicionar cor</button>
+  <button type="button" id="variantes-add" class="link-btn">+ Adicionar variante</button>
 </div>
 
 <div class="field">
@@ -76,15 +76,17 @@
 
 <script>
 (function () {
-  var repeater = document.getElementById('cores-repeater');
-  var addBtn = document.getElementById('cores-add');
+  var repeater = document.getElementById('variantes-repeater');
+  var addBtn = document.getElementById('variantes-add');
 
   function criarLinha() {
     var row = document.createElement('div');
-    row.className = 'color-repeater__row';
-    row.innerHTML = '<input type="text" name="cores_nome[]" placeholder="Nome da cor (ex: Preto)">'
-      + '<input type="color" name="cores_hex[]" value="#000000">'
-      + '<button type="button" class="link-btn link-btn--danger color-repeater__remove">Remover</button>';
+    row.className = 'variant-repeater__row';
+    row.innerHTML = '<input type="text" name="variantes_tamanho[]" placeholder="Tamanho (ex: P)">'
+      + '<input type="text" name="variantes_cor[]" placeholder="Cor (ex: Preto)">'
+      + '<input type="color" name="variantes_cor_hex[]" value="#000000">'
+      + '<input type="number" name="variantes_estoque[]" step="1" min="0" placeholder="Estoque">'
+      + '<button type="button" class="link-btn link-btn--danger variant-repeater__remove">Remover</button>';
     return row;
   }
 
@@ -93,13 +95,13 @@
   });
 
   repeater.addEventListener('click', function (e) {
-    var botao = e.target.closest('.color-repeater__remove');
+    var botao = e.target.closest('.variant-repeater__remove');
     if (!botao) return;
-    var linha = botao.closest('.color-repeater__row');
+    var linha = botao.closest('.variant-repeater__row');
     if (repeater.children.length > 1) {
       linha.remove();
     } else {
-      linha.querySelectorAll('input[type="text"]').forEach(function (input) { input.value = ''; });
+      linha.querySelectorAll('input[type="text"], input[type="number"]').forEach(function (input) { input.value = ''; });
     }
   });
 })();

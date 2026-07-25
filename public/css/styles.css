@@ -446,6 +446,7 @@ img {
   font-weight: 400;
 }
 .btn-outline {
+  background: transparent;
   border: 1px solid var(--line);
   color: var(--fg);
   font-weight: 300;
@@ -859,30 +860,6 @@ body.modal-open {
   color: var(--muted-dim);
 }
 
-/* Contato */
-.contact {
-  padding-top: 88px;
-  padding-bottom: 88px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 22px;
-  text-align: center;
-}
-.contact__title {
-  font-family: "Italiana", serif;
-  font-size: clamp(30px, 3.6vw, 48px);
-  font-weight: 400;
-  margin: 0;
-}
-.contact__text {
-  font-weight: 300;
-  font-size: 17px;
-  color: var(--muted);
-  margin: 0;
-  max-width: 52ch;
-}
-
 /* Footer */
 .site-footer {
   border-top: 1px solid var(--border);
@@ -965,8 +942,7 @@ footer a:hover {
   .btn {
     text-align: center;
   }
-  #colecao .wrap,
-  .contact {
+  #colecao .wrap {
     padding-top: 56px;
     padding-bottom: 56px;
   }
@@ -1092,6 +1068,32 @@ footer a:hover {
   flex: 1;
 }
 .color-repeater__row input[type="color"] {
+  width: 44px;
+  height: 40px;
+  padding: 2px;
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  cursor: pointer;
+}
+.variant-repeater {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.variant-repeater__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.variant-repeater__row input[type="text"] {
+  flex: 1;
+  min-width: 0;
+}
+.variant-repeater__row input[type="number"] {
+  width: 90px;
+}
+.variant-repeater__row input[type="color"] {
   width: 44px;
   height: 40px;
   padding: 2px;
