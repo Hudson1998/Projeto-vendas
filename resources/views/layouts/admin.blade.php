@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>@yield('title', 'Painel · HR Moda Feminina')</title>
+<title>@yield('title', 'Painel · HR Moda Online')</title>
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <link rel="icon" type="image/svg+xml" href="{{ asset('assets/favicon.svg') }}">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Italiana&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">

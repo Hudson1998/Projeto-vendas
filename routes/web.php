@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LojistaAuthController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductReviewController;
@@ -23,6 +24,8 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::get('/cadastro', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/cadastro', [AuthController::class, 'register']);
+    Route::get('/cadastro/lojista', [LojistaAuthController::class, 'showRegister'])->name('register.lojista');
+    Route::post('/cadastro/lojista', [LojistaAuthController::class, 'register']);
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');

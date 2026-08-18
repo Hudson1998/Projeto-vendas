@@ -1,6 +1,6 @@
 @extends('layouts.base')
 
-@section('title', 'Entrar · HR Moda Feminina')
+@section('title', 'Entrar · HR Moda Online')
 
 @section('content')
 <div class="auth-card">

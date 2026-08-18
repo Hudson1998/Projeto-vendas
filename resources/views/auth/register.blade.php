@@ -1,8 +1,20 @@
 @extends('layouts.base')
 
-@section('title', 'Criar conta · HR Moda Feminina')
+@section('title', 'Criar conta · HR Moda Online')
 
 @section('content')
+@php $jaEscolheuCliente = $errors->any() || old('name'); @endphp
+<div class="modal-overlay @if(! $jaEscolheuCliente) is-open @endif" id="tipo-cadastro-modal" aria-hidden="{{ $jaEscolheuCliente ? 'true' : 'false' }}">
+  <div class="modal-box">
+    <h2 class="modal-box__title">Como você quer se cadastrar?</h2>
+    <p class="modal-box__text">Escolha uma opção para continuar.</p>
+    <div class="modal-box__actions">
+      <button type="button" class="btn btn-primary" id="btn-sou-cliente">Sou Cliente</button>
+      <a href="{{ route('register.lojista') }}" class="btn btn-outline">Sou Lojista</a>
+    </div>
+  </div>
+</div>
+
 <div class="auth-card">
   <h1 class="auth-card__title">Criar conta</h1>
   <p class="auth-card__subtitle">Cadastre-se para comprar suas peças favoritas.</p>
@@ -28,10 +40,7 @@
       <input type="email" id="email" name="email" value="{{ old('email') }}" required>
     </div>
 
-    <div class="field">
-      <label for="endereco">Endereço de entrega</label>
-      <input type="text" id="endereco" name="endereco" value="{{ old('endereco') }}" placeholder="Rua, número, bairro, cidade - UF" required>
-    </div>
+    @include('partials.address-fields', ['obrigatorio' => true])
 
     <div class="field">
       <label for="password">Senha</label>
@@ -48,4 +57,19 @@
 
   <p class="auth-card__footer">Já tem conta? <a href="{{ route('login') }}">Entrar</a></p>
 </div>
+
+@push('scripts')
+<script>
+  (function () {
+    var modal = document.getElementById('tipo-cadastro-modal');
+    var btnCliente = document.getElementById('btn-sou-cliente');
+    if (btnCliente) {
+      btnCliente.addEventListener('click', function () {
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+      });
+    }
+  })();
+</script>
+@endpush
 @endsection

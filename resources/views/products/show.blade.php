@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $product->nome.' · HR Moda Feminina')
+@section('title', $product->nome.' · HR Moda Online')
 
 @section('content')
 <section class="wrap page-section">

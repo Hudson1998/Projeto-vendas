@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>@yield('title', 'HR Moda Feminina')</title>
+<title>@yield('title', 'HR Moda Online')</title>
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <link rel="icon" type="image/svg+xml" href="{{ asset('assets/favicon.svg') }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -66,7 +66,7 @@
     <div class="header-account">
       @auth
         @if (auth()->user()->isAdmin())
-          <a href="{{ route('admin.dashboard') }}" class="account-link">Painel Admin</a>
+          <a href="{{ route('admin.dashboard') }}" class="account-link header-account__item--desktop">Painel Admin</a>
         @endif
 
         <a href="{{ route('cart.index') }}" class="cart-icon" title="Carrinho">
@@ -74,7 +74,11 @@
           <span class="cart-icon__badge" id="cart-badge" @if($quantidadeCarrinho < 1) style="display:none" @endif>{{ $quantidadeCarrinho }}</span>
         </a>
 
-        <div class="notification-dropdown" id="notification-dropdown">
+        <button type="button" id="mobile-menu-toggle" class="mobile-menu-toggle" aria-haspopup="menu" aria-expanded="false" aria-controls="mobile-menu" title="Menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+
+        <div class="notification-dropdown header-account__item--desktop" id="notification-dropdown">
           <button type="button" id="notification-toggle" class="notification-bell" aria-haspopup="menu" aria-expanded="false" title="Notificações">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
             @if ($notificacoes->isNotEmpty())
@@ -94,7 +98,7 @@
           </div>
         </div>
 
-        <div class="profile-dropdown" id="profile-dropdown">
+        <div class="profile-dropdown header-account__item--desktop" id="profile-dropdown">
           <button type="button" id="profile-toggle" class="profile-avatar" aria-haspopup="menu" aria-expanded="false">
             {{ auth()->user()->initials() }}
           </button>
@@ -115,12 +119,54 @@
           </div>
         </div>
       @else
-        <a href="{{ route('login') }}" class="account-link">Entrar</a>
-        <a href="{{ route('register') }}" class="account-link account-link--primary">Cadastrar</a>
+        <button type="button" id="mobile-menu-toggle" class="mobile-menu-toggle" aria-haspopup="menu" aria-expanded="false" aria-controls="mobile-menu" title="Menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+        <a href="{{ route('login') }}" class="account-link header-account__item--desktop">Entrar</a>
+        <a href="{{ route('register') }}" class="account-link account-link--primary header-account__item--desktop">Cadastrar</a>
       @endauth
     </div>
   </div>
 </header>
+
+<div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+  <div class="mobile-menu__panel">
+    @auth
+      <div class="mobile-menu__profile">
+        <span class="mobile-menu__profile-name">{{ auth()->user()->name }}</span>
+        <span class="mobile-menu__profile-email">{{ auth()->user()->email }}</span>
+      </div>
+      @if (auth()->user()->isAdmin())
+        <a href="{{ route('admin.dashboard') }}" class="mobile-menu__item">Painel Admin</a>
+      @endif
+      <a href="{{ route('profile.edit') }}" class="mobile-menu__item">Configurações</a>
+      <a href="{{ route('orders.index') }}" class="mobile-menu__item">Acompanhar pedido</a>
+      <a href="{{ route('orders.index') }}#realizadas" class="mobile-menu__item">Compras realizadas</a>
+      <a href="{{ route('orders.index') }}#canceladas" class="mobile-menu__item">Compras canceladas</a>
+      <a href="{{ route('favorites.index') }}" class="mobile-menu__item">Favoritos</a>
+
+      <div class="mobile-menu__notifications">
+        <div class="mobile-menu__notifications-title">Notificações</div>
+        @forelse ($notificacoes as $pedido)
+          <div class="mobile-menu__notification">
+            <span class="notification-menu__text">Pedido #{{ $pedido->id }} foi {{ $pedido->status === 'concluido' ? 'concluído' : 'cancelado' }}</span>
+            <span class="notification-menu__date">{{ $pedido->updated_at->format('d/m/Y') }}</span>
+          </div>
+        @empty
+          <div class="notification-menu__empty">Nenhuma notificação no momento.</div>
+        @endforelse
+      </div>
+
+      <form method="POST" action="{{ route('logout') }}">
+        @csrf
+        <button type="submit" class="mobile-menu__item mobile-menu__item--exit">Sair</button>
+      </form>
+    @else
+      <a href="{{ route('login') }}" class="mobile-menu__item">Entrar</a>
+      <a href="{{ route('register') }}" class="mobile-menu__item">Cadastrar</a>
+    @endauth
+  </div>
+</div>
 
 @if (session('status'))
   <div class="wrap">
@@ -196,5 +242,6 @@
 <script src="{{ asset('js/ajax-nav.js') }}"></script>
 <script src="{{ asset('js/app.js') }}"></script>
 <script src="{{ asset('js/flash.js') }}"></script>
+<script src="{{ asset('js/cep.js') }}"></script>
 </body>
 </html>

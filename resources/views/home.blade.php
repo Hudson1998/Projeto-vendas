@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'HR Moda Feminina')
+@section('title', 'HR Moda Online')
 
 @section('content')
 

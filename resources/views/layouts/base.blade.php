@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>@yield('title', 'HR Moda Feminina')</title>
+<title>@yield('title', 'HR Moda Online')</title>
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <link rel="icon" type="image/svg+xml" href="{{ asset('assets/favicon.svg') }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,5 +36,7 @@
 
 <script src="{{ asset('js/ajax-nav.js') }}"></script>
 <script src="{{ asset('js/flash.js') }}"></script>
+<script src="{{ asset('js/cep.js') }}"></script>
+@stack('scripts')
 </body>
 </html>

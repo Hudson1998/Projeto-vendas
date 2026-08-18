@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Favoritos · HR Moda Feminina')
+@section('title', 'Favoritos · HR Moda Online')
 
 @section('content')
 <section class="wrap page-section">

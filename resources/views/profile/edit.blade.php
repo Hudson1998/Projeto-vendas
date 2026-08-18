@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Configurações · HR Moda Feminina')
+@section('title', 'Configurações · HR Moda Online')
 
 @section('content')
 <section class="wrap page-section">
@@ -34,10 +34,7 @@
         <input type="email" id="email" name="email" value="{{ old('email', $user->email) }}" required>
       </div>
 
-      <div class="field">
-        <label for="endereco">Endereço de entrega</label>
-        <input type="text" id="endereco" name="endereco" value="{{ old('endereco', $user->endereco) }}" required>
-      </div>
+      @include('partials.address-fields', ['obrigatorio' => false, 'enderecoAtual' => $user->endereco])
 
       <button type="submit" class="btn btn-primary btn-block">Salvar alterações</button>
     </form>
