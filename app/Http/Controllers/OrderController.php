@@ -22,6 +22,25 @@ class OrderController extends Controller
         ]);
     }
 
+    /**
+     * "Acompanhar pedido": os pedidos ainda em andamento, do mais recente para
+     * o mais antigo, cada um com a sua linha do tempo.
+     */
+    public function tracking(Request $request): View
+    {
+        $pedidos = Order::with(['items.product', 'transportadora'])
+            ->where('user_id', $request->user()->id)
+            ->latest()
+            ->get()
+            ->filter(fn (Order $pedido) => $pedido->emAcompanhamento())
+            ->values();
+
+        return view('orders.tracking', [
+            'pedidos' => $pedidos,
+            'etapas' => Order::ETAPAS_ACOMPANHAMENTO,
+        ]);
+    }
+
     public function cancel(Request $request, Order $order): RedirectResponse
     {
         abort_unless($order->user_id === $request->user()->id, 403);

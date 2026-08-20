@@ -108,7 +108,7 @@
               <span class="profile-menu__email">{{ auth()->user()->email }}</span>
             </div>
             <a href="{{ route('profile.edit') }}" class="profile-menu__item" role="menuitem">Configurações</a>
-            <a href="{{ route('orders.index') }}" class="profile-menu__item" role="menuitem">Acompanhar pedido</a>
+            <a href="{{ route('orders.tracking') }}" class="profile-menu__item" role="menuitem">Acompanhar pedido</a>
             <a href="{{ route('orders.index') }}#realizadas" class="profile-menu__item" role="menuitem">Compras realizadas</a>
             <a href="{{ route('orders.index') }}#canceladas" class="profile-menu__item" role="menuitem">Compras canceladas</a>
             <a href="{{ route('favorites.index') }}" class="profile-menu__item" role="menuitem">Favoritos</a>
@@ -140,7 +140,7 @@
         <a href="{{ route('admin.dashboard') }}" class="mobile-menu__item">Painel Admin</a>
       @endif
       <a href="{{ route('profile.edit') }}" class="mobile-menu__item">Configurações</a>
-      <a href="{{ route('orders.index') }}" class="mobile-menu__item">Acompanhar pedido</a>
+      <a href="{{ route('orders.tracking') }}" class="mobile-menu__item">Acompanhar pedido</a>
       <a href="{{ route('orders.index') }}#realizadas" class="mobile-menu__item">Compras realizadas</a>
       <a href="{{ route('orders.index') }}#canceladas" class="mobile-menu__item">Compras canceladas</a>
       <a href="{{ route('favorites.index') }}" class="mobile-menu__item">Favoritos</a>

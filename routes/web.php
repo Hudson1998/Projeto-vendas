@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/carrinho/finalizar', [CartController::class, 'checkout'])->name('cart.checkout');
 
     Route::get('/pedidos', [OrderController::class, 'index'])->name('orders.index');
+    Route::get('/pedidos/acompanhar', [OrderController::class, 'tracking'])->name('orders.tracking');
     Route::post('/pedidos/{order}/cancelar', [OrderController::class, 'cancel'])->name('orders.cancel');
     Route::post('/pedidos/{order}/avaliar', [OrderController::class, 'rate'])->name('orders.rate');
 
