@@ -1,4 +1,15 @@
 (function () {
+  function ajustarAlturaSidebar() {
+    const sidebar = document.getElementById('admin-sidebar');
+    if (!sidebar) return;
+    const zoom = parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
+    sidebar.style.height = (window.innerHeight / zoom) + 'px';
+  }
+
+  ajustarAlturaSidebar();
+  window.addEventListener('resize', ajustarAlturaSidebar);
+  document.addEventListener('ajaxpage:loaded', ajustarAlturaSidebar);
+
   function closeAdminSidebar() {
     const sidebar = document.getElementById('admin-sidebar');
     const overlay = document.getElementById('admin-sidebar-overlay');

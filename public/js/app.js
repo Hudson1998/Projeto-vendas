@@ -83,22 +83,14 @@
   /* Vitrine de produtos (home) — estado reinicia a cada carregamento da página */
   let gridState = null;
   let buscaTimeout = null;
+  const PRODUTOS_POR_PAGINA = 40;
 
-  function renderProductGrid() {
-    const productGrid = document.getElementById('product-grid');
-    if (!productGrid || !gridState) return;
+  function cartaoProduto(item) {
+    const precoHtml = item.precoPromocional
+      ? `<span class="product-card__price product-card__price--old">${item.preco}</span><span class="product-card__price product-card__price--promo">${item.precoPromocional}</span>`
+      : `<span class="product-card__price">${item.preco}</span>`;
 
-    const PRODUTOS = window.PRODUTOS || [];
-    const q = gridState.busca.trim().toLowerCase();
-    const filtrados = PRODUTOS.filter(
-      (p) =>
-        (gridState.cat === 'Todos' || p.categoria === gridState.cat) &&
-        (!q || p.nome.toLowerCase().includes(q) || p.categoria.toLowerCase().includes(q))
-    );
-
-    productGrid.innerHTML = filtrados
-      .map(
-        (item) => `
+    return `
       <div class="product-card">
         <a href="/produtos/${item.id}" class="product-card__link">
           <div class="product-card__image-wrap">
@@ -107,24 +99,97 @@
           <div class="product-card__body">
             <span class="product-card__category">${item.categoria}</span>
             <span class="product-card__name">${item.nome}</span>
-            <span class="product-card__price">${item.preco}</span>
+            ${precoHtml}
           </div>
         </a>
         <button type="button" class="btn-favorite ${item.favoritado ? 'is-active' : ''}" data-id="${item.id}" title="Favoritar">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="${item.favoritado ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.6"><path d="M12 21s-7.5-4.6-10-9.1C.4 8.3 2 4.5 5.6 4c2-.3 3.9.6 6.4 3 2.5-2.4 4.4-3.3 6.4-3 3.6.5 5.2 4.3 3.6 7.9-2.5 4.5-10 9.1-10 9.1z"/></svg>
         </button>
-      </div>`
-      )
-      .join('');
+      </div>`;
+  }
+
+  const CARROSSEL_MIN_CARTOES = 6;
+
+  function initCarrossel(chave, produtos) {
+    const secao = document.getElementById('secao-' + chave);
+    const track = document.getElementById('carousel-' + chave);
+    if (!secao || !track) return;
+
+    secao.style.display = '';
+
+    if (!produtos || produtos.length === 0) {
+      track.innerHTML = cartaoVazio().repeat(CARROSSEL_MIN_CARTOES);
+      return;
+    }
+
+    track.innerHTML = produtos.map(cartaoProduto).join('');
+  }
+
+  function initCarrosseis() {
+    initCarrossel('mais-comprados', window.CARROSSEL_MAIS_COMPRADOS || []);
+    initCarrossel('mais-visitados', window.CARROSSEL_MAIS_VISITADOS || []);
+    initCarrossel('promocoes', window.CARROSSEL_PROMOCOES || []);
+  }
+
+  function cartaoVazio() {
+    return `
+      <div class="product-card product-card--blank" aria-hidden="true">
+        <div class="product-card__image-wrap product-card__image-wrap--blank"></div>
+        <div class="product-card__body">
+          <span class="product-card__placeholder-line"></span>
+          <span class="product-card__placeholder-line product-card__placeholder-line--short"></span>
+        </div>
+      </div>`;
+  }
+
+  function renderPaginacao(totalPaginas) {
+    const container = document.getElementById('pagination');
+    if (!container) return;
+
+    if (totalPaginas <= 1) {
+      container.innerHTML = '';
+      return;
+    }
+
+    let botoes = '';
+    for (let i = 1; i <= totalPaginas; i++) {
+      botoes += `<button type="button" class="pagination__page ${i === gridState.pagina ? 'is-active' : ''}" data-pagina="${i}">${i}</button>`;
+    }
+    container.innerHTML = botoes;
+  }
+
+  function renderProductGrid() {
+    const productGrid = document.getElementById('product-grid');
+    if (!productGrid || !gridState) return;
+
+    const PRODUTOS = window.PRODUTOS || [];
+    const catalogoVazio = PRODUTOS.length === 0;
+    const q = gridState.busca.trim().toLowerCase();
+    const filtrados = PRODUTOS.filter(
+      (p) =>
+        (gridState.cat === 'Todos' || p.categoria === gridState.cat) &&
+        (!q || p.nome.toLowerCase().includes(q) || p.categoria.toLowerCase().includes(q))
+    );
+
+    const totalPaginas = Math.max(1, Math.ceil(filtrados.length / PRODUTOS_POR_PAGINA));
+    if (gridState.pagina > totalPaginas) gridState.pagina = totalPaginas;
+    if (gridState.pagina < 1) gridState.pagina = 1;
+
+    const inicio = (gridState.pagina - 1) * PRODUTOS_POR_PAGINA;
+    const itensPagina = filtrados.slice(inicio, inicio + PRODUTOS_POR_PAGINA);
+    const quantidadeVazios = catalogoVazio
+      ? PRODUTOS_POR_PAGINA
+      : Math.max(0, PRODUTOS_POR_PAGINA - itensPagina.length);
+
+    productGrid.innerHTML =
+      itensPagina.map(cartaoProduto).join('') + cartaoVazio().repeat(quantidadeVazios);
 
     const emptyState = document.getElementById('empty-state');
     const collectionTitle = document.getElementById('collection-title');
-    const collectionCount = document.getElementById('collection-count');
-    if (emptyState) emptyState.classList.toggle('is-visible', filtrados.length === 0);
+    if (emptyState) emptyState.classList.toggle('is-visible', filtrados.length === 0 && !catalogoVazio);
     if (collectionTitle) collectionTitle.textContent = gridState.cat === 'Todos' ? 'Coleção' : gridState.cat;
-    if (collectionCount) {
-      collectionCount.textContent = filtrados.length + (filtrados.length === 1 ? ' peça' : ' peças');
-    }
+
+    renderPaginacao(totalPaginas);
   }
 
   function registrarBusca(termo) {
@@ -178,8 +243,9 @@
       gridState = null;
       return;
     }
-    gridState = { cat: 'Todos', busca: '' };
+    gridState = { cat: 'Todos', busca: '', pagina: 1 };
     renderProductGrid();
+    initCarrosseis();
   }
 
   /* Listeners globais delegados em document — configurados uma única vez,
@@ -201,6 +267,7 @@
       const categoryOption = e.target.closest('.category-option');
       if (categoryOption && gridState) {
         gridState.cat = categoryOption.dataset.cat;
+        gridState.pagina = 1;
         const label = document.getElementById('category-label');
         if (label) label.textContent = categoryOption.dataset.cat;
         document.querySelectorAll('.category-option').forEach((o) => o.classList.toggle('is-active', o === categoryOption));
@@ -209,6 +276,28 @@
         if (dd) dd.classList.remove('is-open');
         if (dt) dt.setAttribute('aria-expanded', 'false');
         renderProductGrid();
+        return;
+      }
+
+      const carrosselPrev = e.target.closest('[data-carousel-prev]');
+      if (carrosselPrev) {
+        const track = document.getElementById('carousel-' + carrosselPrev.dataset.carouselPrev);
+        if (track) track.scrollBy({ left: -track.clientWidth * 0.9, behavior: 'smooth' });
+        return;
+      }
+
+      const carrosselNext = e.target.closest('[data-carousel-next]');
+      if (carrosselNext) {
+        const track = document.getElementById('carousel-' + carrosselNext.dataset.carouselNext);
+        if (track) track.scrollBy({ left: track.clientWidth * 0.9, behavior: 'smooth' });
+        return;
+      }
+
+      const paginaBtn = e.target.closest('.pagination__page');
+      if (paginaBtn && gridState) {
+        gridState.pagina = Number(paginaBtn.dataset.pagina);
+        renderProductGrid();
+        document.getElementById('colecao')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         return;
       }
 
@@ -304,6 +393,7 @@
     document.addEventListener('input', (e) => {
       if (e.target.id !== 'search-input' || !gridState) return;
       gridState.busca = e.target.value;
+      gridState.pagina = 1;
       renderProductGrid();
 
       clearTimeout(buscaTimeout);

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Classes\Loja;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -49,9 +50,9 @@ class User extends Authenticatable
         return $this->hasMany(Order::class);
     }
 
-    public function lojistaProfile(): HasOne
+    public function loja(): HasOne
     {
-        return $this->hasOne(LojistaProfile::class);
+        return $this->hasOne(Loja::class);
     }
 
     public function initials(): string

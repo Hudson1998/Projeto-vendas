@@ -9,8 +9,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Italiana&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ asset('css/styles.css') }}">
-<link rel="stylesheet" href="{{ asset('css/admin.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/styles.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/admin.css') }}">
 </head>
 <body>
 
@@ -217,17 +217,23 @@
         ? \App\Models\Favorite::where('user_id', auth()->id())->pluck('product_id')
         : collect();
 
-    $produtosParaJs = $produtos->map(fn ($p) => [
+    $mapParaJs = fn ($colecao) => $colecao->map(fn ($p) => [
         'id' => $p->id,
         'nome' => $p->nome,
         'preco' => 'R$ '.number_format($p->preco, 2, ',', '.'),
+        'precoPromocional' => $p->preco_promocional ? 'R$ '.number_format($p->preco_promocional, 2, ',', '.') : null,
         'categoria' => $p->categoria,
         'url' => asset($p->imagem),
         'favoritado' => $favoritosIds->contains($p->id),
     ]);
+
+    $produtosParaJs = $mapParaJs($produtos);
   @endphp
   <script>
     window.PRODUTOS = @json($produtosParaJs);
+    window.CARROSSEL_MAIS_COMPRADOS = @json($mapParaJs($carrosselMaisComprados ?? collect()));
+    window.CARROSSEL_MAIS_VISITADOS = @json($mapParaJs($carrosselMaisVisitados ?? collect()));
+    window.CARROSSEL_PROMOCOES = @json($mapParaJs($carrosselPromocoes ?? collect()));
   </script>
 @endisset
 <script>
@@ -239,9 +245,10 @@
 </script>
 </div>
 
-<script src="{{ asset('js/ajax-nav.js') }}"></script>
-<script src="{{ asset('js/app.js') }}"></script>
-<script src="{{ asset('js/flash.js') }}"></script>
-<script src="{{ asset('js/cep.js') }}"></script>
+<script src="{{ asset_v('js/ajax-nav.js') }}"></script>
+<script src="{{ asset_v('js/app.js') }}"></script>
+<script src="{{ asset_v('js/flash.js') }}"></script>
+<script src="{{ asset_v('js/cep.js') }}"></script>
+<script src="{{ asset_v('js/lojista-cadastro.js') }}"></script>
 </body>
 </html>

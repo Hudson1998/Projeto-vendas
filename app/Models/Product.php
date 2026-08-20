@@ -2,22 +2,37 @@
 
 namespace App\Models;
 
+use App\Classes\Loja;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
     protected $fillable = [
+        'loja_id',
         'nome',
         'categoria',
         'preco',
+        'preco_promocional',
         'imagem',
         'descricao',
     ];
 
     protected $casts = [
         'preco' => 'decimal:2',
+        'preco_promocional' => 'decimal:2',
     ];
+
+    public function emPromocao(): bool
+    {
+        return $this->preco_promocional !== null && $this->preco_promocional < $this->preco;
+    }
+
+    public function loja(): BelongsTo
+    {
+        return $this->belongsTo(Loja::class);
+    }
 
     public function reviews(): HasMany
     {
@@ -27,6 +42,11 @@ class Product extends Model
     public function variants(): HasMany
     {
         return $this->hasMany(ProductVariant::class);
+    }
+
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
     }
 
     public function estoqueTotal(): int

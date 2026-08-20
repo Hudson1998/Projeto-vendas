@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Pages\PaginaInicial;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -12,7 +13,7 @@ class ProductController extends Controller
 {
     public function show(Product $product): View
     {
-        $product->load('variants');
+        $product = (new PaginaInicial)->linkProduto($product->id);
 
         $reviews = $product->reviews()->with('user')->latest()->get();
 

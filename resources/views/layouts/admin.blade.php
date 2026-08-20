@@ -7,8 +7,8 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <link rel="icon" type="image/svg+xml" href="{{ asset('assets/favicon.svg') }}">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Italiana&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ asset('css/styles.css') }}">
-<link rel="stylesheet" href="{{ asset('css/admin.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/styles.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/admin.css') }}">
 </head>
 <body class="admin-body">
 
@@ -76,8 +76,8 @@
 </div>
 </div>
 
-<script src="{{ asset('js/ajax-nav.js') }}"></script>
-<script src="{{ asset('js/admin-nav.js') }}"></script>
-<script src="{{ asset('js/flash.js') }}"></script>
+<script src="{{ asset_v('js/ajax-nav.js') }}"></script>
+<script src="{{ asset_v('js/admin-nav.js') }}"></script>
+<script src="{{ asset_v('js/flash.js') }}"></script>
 </body>
 </html>

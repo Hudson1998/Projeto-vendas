@@ -96,5 +96,5 @@
 <script>
   window.ADMIN_STATS_URL = "{{ route('admin.stats') }}";
 </script>
-<script src="{{ asset('js/admin.js') }}"></script>
+<script src="{{ asset_v('js/admin.js') }}"></script>
 @endsection

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Pages\PaginaInicial;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,7 +23,9 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+        $tentativa = (new PaginaInicial)->login($credentials['email'], $credentials['password'], $request->boolean('remember'));
+
+        if ($tentativa->tentativasFalhas > 0) {
             return back()->withErrors([
                 'email' => 'E-mail ou senha inválidos.',
             ])->onlyInput('email');

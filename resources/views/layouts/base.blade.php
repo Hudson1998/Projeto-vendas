@@ -9,8 +9,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Italiana&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ asset('css/styles.css') }}">
-<link rel="stylesheet" href="{{ asset('css/admin.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/styles.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/admin.css') }}">
 </head>
 <body>
 
@@ -34,9 +34,11 @@
 </main>
 </div>
 
-<script src="{{ asset('js/ajax-nav.js') }}"></script>
-<script src="{{ asset('js/flash.js') }}"></script>
-<script src="{{ asset('js/cep.js') }}"></script>
+<script src="{{ asset_v('js/ajax-nav.js') }}"></script>
+<script src="{{ asset_v('js/app.js') }}"></script>
+<script src="{{ asset_v('js/flash.js') }}"></script>
+<script src="{{ asset_v('js/cep.js') }}"></script>
+<script src="{{ asset_v('js/lojista-cadastro.js') }}"></script>
 @stack('scripts')
 </body>
 </html>

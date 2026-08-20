@@ -2,17 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
+use App\Pages\PaginaInicial;
 use Illuminate\View\View;
 
 class HomeController extends Controller
 {
     public function index(): View
     {
-        $produtos = Product::orderBy('categoria')->orderBy('nome')->get();
+        $paginaInicial = new PaginaInicial;
 
         return view('home', [
-            'produtos' => $produtos,
+            'produtos' => $paginaInicial->filtro(),
+            'carrosselMaisComprados' => $paginaInicial->carrosselMaisComprados(10),
+            'carrosselMaisVisitados' => $paginaInicial->carrosselMaisVisitados(10),
+            'carrosselPromocoes' => $paginaInicial->carrosselPromocoes(10),
         ]);
     }
 }

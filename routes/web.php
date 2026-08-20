@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LojaDashboardController;
 use App\Http\Controllers\LojistaAuthController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
@@ -17,7 +18,7 @@ Route::get('/', [HomeController::class, 'index'])->middleware('log.visit')->name
 
 Route::post('/buscas', [SearchLogController::class, 'store'])->name('buscas.store');
 
-Route::get('/produtos/{product}', [ProductController::class, 'show'])->name('products.show');
+Route::get('/produtos/{product}', [ProductController::class, 'show'])->middleware('log.visit')->name('products.show');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -70,4 +71,24 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/produtos', [ProductController::class, 'store'])->name('products.store');
     Route::get('/produtos/{product}/editar', [ProductController::class, 'edit'])->name('products.edit');
     Route::put('/produtos/{product}', [ProductController::class, 'update'])->name('products.update');
+});
+
+Route::middleware(['auth', 'lojista'])->prefix('loja')->name('loja.')->group(function () {
+    Route::get('/', [LojaDashboardController::class, 'dashboard'])->name('dashboard');
+    Route::get('/dados', [LojaDashboardController::class, 'dados'])->name('dados');
+
+    Route::get('/pedidos', [LojaDashboardController::class, 'pedidos'])->name('pedidos');
+    Route::post('/pedidos/{order}/entrega', [LojaDashboardController::class, 'definirEntrega'])->name('pedidos.entrega');
+    Route::post('/pedidos/{order}/separar', [LojaDashboardController::class, 'separar'])->name('pedidos.separar');
+    Route::post('/pedidos/{order}/embalar', [LojaDashboardController::class, 'embalar'])->name('pedidos.embalar');
+    Route::post('/pedidos/{order}/enviar', [LojaDashboardController::class, 'enviar'])->name('pedidos.enviar');
+
+    Route::get('/transportadoras', [LojaDashboardController::class, 'transportadoras'])->name('transportadoras');
+    Route::post('/transportadoras', [LojaDashboardController::class, 'cadastrarTransportadora'])->name('transportadoras.store');
+    Route::post('/transportadoras/{transportadora}/vincular', [LojaDashboardController::class, 'vincular'])->name('transportadoras.vincular');
+    Route::post('/transportadoras/{transportadora}/desvincular', [LojaDashboardController::class, 'desvincular'])->name('transportadoras.desvincular');
+    Route::post('/motoristas', [LojaDashboardController::class, 'cadastrarMotorista'])->name('motoristas.store');
+
+    Route::get('/clientes', [LojaDashboardController::class, 'clientes'])->name('clientes');
+    Route::get('/produtos', [LojaDashboardController::class, 'produtos'])->name('produtos');
 });

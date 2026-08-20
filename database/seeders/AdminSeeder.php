@@ -10,7 +10,7 @@ class AdminSeeder extends Seeder
     public function run(): void
     {
         User::updateOrCreate(
-            ['email' => 'admin@hrmodafeminina.com.br'],
+            ['email' => 'admin@hrmoda.com.br'],
             [
                 'name' => 'Administrador HR',
                 'password' => 'AdminHR@2026',

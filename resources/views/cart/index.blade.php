@@ -103,14 +103,25 @@
               <p class="cart-summary__endereco cart-summary__endereco--vazio">Nenhum endereço cadastrado.</p>
               <a href="{{ route('profile.edit') }}" class="link-btn">Cadastrar endereço</a>
             @endif
+            <label for="distancia_km" style="margin-top: 12px;">Distância estimada até você (km)</label>
+            <input type="number" id="distancia_km" name="distancia_km" min="0" max="200" step="0.1" value="3">
+            <span class="field__hint">Frete: R$ 12 até 3km, +R$ 10 a cada 6km adicionais.</span>
           </div>
 
           <div class="cart-summary__total">
+            <span>Subtotal</span>
+            <span id="resumo-subtotal">R$ {{ number_format($total, 2, ',', '.') }}</span>
+          </div>
+          <div class="cart-summary__total">
+            <span>Frete</span>
+            <span id="resumo-frete">R$ 0,00</span>
+          </div>
+          <div class="cart-summary__total">
             <span>Total</span>
-            <span>R$ {{ number_format($total, 2, ',', '.') }}</span>
+            <span id="resumo-total">R$ {{ number_format($total, 2, ',', '.') }}</span>
           </div>
 
-          <button type="submit" class="btn btn-primary btn-block">Confirmar pedido</button>
+          <button type="submit" class="btn btn-primary btn-block" id="btn-confirmar-pedido">Confirmar pedido</button>
         </form>
       </div>
     </div>
@@ -118,12 +129,39 @@
 </section>
 
 <script>
+  const SUBTOTAL_PEDIDO = {{ (float) $total }};
+
+  function calcularFrete(distanciaKm) {
+    if (distanciaKm <= 3) return 12;
+    const faixas = Math.ceil((distanciaKm - 3) / 6);
+    return 12 + faixas * 10;
+  }
+
+  function formatarMoeda(valor) {
+    return 'R$ ' + valor.toFixed(2).replace('.', ',');
+  }
+
+  function atualizarResumo() {
+    const entrega = document.querySelector('input[name="tipo_entrega"]:checked').value === 'entrega';
+    const distancia = parseFloat(document.getElementById('distancia_km')?.value || '0') || 0;
+    const frete = entrega ? calcularFrete(distancia) : 0;
+
+    document.getElementById('resumo-frete').textContent = formatarMoeda(frete);
+    document.getElementById('resumo-total').textContent = formatarMoeda(SUBTOTAL_PEDIDO + frete);
+
+    return { entrega, distancia, frete };
+  }
+
   document.querySelectorAll('[data-toggle-endereco]').forEach((radio) => {
     radio.addEventListener('change', () => {
       document.getElementById('bloco-endereco').style.display =
         document.querySelector('input[name="tipo_entrega"]:checked').value === 'entrega' ? 'block' : 'none';
+      atualizarResumo();
     });
   });
+
+  document.getElementById('distancia_km')?.addEventListener('input', atualizarResumo);
+  atualizarResumo();
 
   document.getElementById('clear-cart-btn')?.addEventListener('click', () => {
     confirmarAcao({
@@ -132,6 +170,28 @@
       textoConfirmar: 'Limpar',
       textoCancelar: 'Desistir',
       onConfirm: () => document.getElementById('clear-cart-form').submit(),
+    });
+  });
+
+  const formCheckout = document.getElementById('btn-confirmar-pedido')?.closest('form');
+  let checkoutConfirmado = false;
+
+  formCheckout?.addEventListener('submit', (e) => {
+    if (checkoutConfirmado) return;
+    e.preventDefault();
+
+    const { frete } = atualizarResumo();
+    const total = SUBTOTAL_PEDIDO + frete;
+
+    confirmarAcao({
+      titulo: 'Confirmar pedido',
+      mensagem: `Subtotal: ${formatarMoeda(SUBTOTAL_PEDIDO)} · Frete: ${formatarMoeda(frete)} · Total: ${formatarMoeda(total)}. Deseja finalizar a compra?`,
+      textoConfirmar: 'Pagar agora',
+      textoCancelar: 'Voltar',
+      onConfirm: () => {
+        checkoutConfirmado = true;
+        formCheckout.requestSubmit();
+      },
     });
   });
 </script>

@@ -26,7 +26,7 @@
 
       <div class="field">
         <label for="name">Nome</label>
-        <input type="text" id="name" name="name" value="{{ old('name', $user->name) }}" required>
+        <input type="text" id="name" name="name" value="{{ old('name', $user->nome) }}" required>
       </div>
 
       <div class="field">

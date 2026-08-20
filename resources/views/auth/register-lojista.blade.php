@@ -151,8 +151,4 @@
 
   <p class="auth-card__footer">Já tem conta? <a href="{{ route('login') }}">Entrar</a></p>
 </div>
-
-@push('scripts')
-<script src="{{ asset('js/lojista-cadastro.js') }}"></script>
-@endpush
 @endsection

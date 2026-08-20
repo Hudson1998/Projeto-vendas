@@ -5,21 +5,21 @@ namespace App\Http\Controllers;
 use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\Product;
+use App\Pages\PaginaCompra;
+use App\Pages\PaginaInicial;
+use App\Pages\PaginaPagamento;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class CartController extends Controller
 {
     public function index(Request $request): View
     {
-        $itens = CartItem::with('product')
-            ->where('user_id', $request->user()->id)
-            ->latest()
-            ->get();
+        $itens = (new PaginaInicial)->carrinho($request->user()->id);
 
         $total = $itens->sum(fn ($item) => $item->product->preco * $item->quantidade);
 
@@ -38,35 +38,17 @@ class CartController extends Controller
             'cor' => ['nullable', 'string', 'max:60'],
         ]);
 
-        $product = Product::with('variants')->findOrFail($data['product_id']);
-        $quantidadeDesejada = $data['quantidade'] ?? 1;
-        $tamanho = $data['tamanho'] ?? null;
-        $cor = $data['cor'] ?? null;
-
-        $variante = $product->variantePara($tamanho, $cor);
-
-        if (!$variante) {
-            return response()->json(['message' => 'Selecione um tamanho/cor válido.'], 422);
+        try {
+            (new PaginaCompra)->adicionarMais(
+                $request->user()->id,
+                $data['product_id'],
+                $data['quantidade'] ?? 1,
+                $data['tamanho'] ?? null,
+                $data['cor'] ?? null,
+            );
+        } catch (ValidationException $e) {
+            return response()->json(['message' => collect($e->errors())->flatten()->first()], 422);
         }
-
-        if ($variante->estoque < 1) {
-            return response()->json(['message' => 'Peça esgotada.'], 422);
-        }
-
-        $item = CartItem::firstOrNew([
-            'user_id' => $request->user()->id,
-            'product_id' => $product->id,
-            'tamanho' => $tamanho,
-            'cor' => $cor,
-        ]);
-
-        $novaQuantidade = ($item->quantidade ?? 0) + $quantidadeDesejada;
-        if ($novaQuantidade > $variante->estoque) {
-            return response()->json(['message' => 'Quantidade indisponível em estoque.'], 422);
-        }
-
-        $item->quantidade = $novaQuantidade;
-        $item->save();
 
         $quantidadeTotal = CartItem::where('user_id', $request->user()->id)->sum('quantidade');
 
@@ -100,7 +82,7 @@ class CartController extends Controller
 
     public function clear(Request $request): RedirectResponse
     {
-        CartItem::where('user_id', $request->user()->id)->delete();
+        (new PaginaCompra)->limpar($request->user()->id);
 
         return back()->with('status', 'Carrinho esvaziado.');
     }
@@ -112,7 +94,19 @@ class CartController extends Controller
         $data = $request->validate([
             'forma_pagamento' => ['required', 'in:pix,cartao,boleto'],
             'tipo_entrega' => ['required', 'in:retirada,entrega'],
+            'distancia_km' => ['nullable', 'numeric', 'min:0', 'max:200'],
         ]);
+
+        $pagamento = new PaginaPagamento;
+
+        if (! $pagamento->validarSeguranca(
+            new Order(['user_id' => $user->id]),
+            $request->ip()
+        )) {
+            return back()->withErrors(['seguranca' => 'Não foi possível validar essa compra por segurança. Tente novamente em alguns minutos.']);
+        }
+
+        $formaPagamento = (new PaginaCompra)->selecionaFormaPagamento($data['forma_pagamento']);
 
         $itens = CartItem::with('product.variants')->where('user_id', $user->id)->get();
 
@@ -132,12 +126,19 @@ class CartController extends Controller
             }
         }
 
-        $order = DB::transaction(function () use ($user, $itens, $data) {
+        $distanciaKm = (float) ($data['distancia_km'] ?? 3);
+        $valorFrete = $data['tipo_entrega'] === 'entrega' ? (new PaginaCompra)->calcularFrete($distanciaKm) : 0.0;
+
+        $order = DB::transaction(function () use ($user, $itens, $data, $formaPagamento, $distanciaKm, $valorFrete) {
+            $subtotal = $itens->sum(fn ($item) => $item->product->preco * $item->quantidade);
+
             $order = Order::create([
                 'user_id' => $user->id,
-                'total' => $itens->sum(fn ($item) => $item->product->preco * $item->quantidade),
+                'total' => $subtotal,
+                'distancia_km' => $data['tipo_entrega'] === 'entrega' ? $distanciaKm : null,
+                'valor_frete' => $valorFrete,
                 'status' => 'concluido',
-                'forma_pagamento' => $data['forma_pagamento'],
+                'forma_pagamento' => $formaPagamento,
                 'tipo_entrega' => $data['tipo_entrega'],
                 'endereco_entrega' => $data['tipo_entrega'] === 'entrega' ? $user->endereco : null,
             ]);
@@ -159,6 +160,19 @@ class CartController extends Controller
 
             return $order;
         });
+
+        match ($formaPagamento) {
+            'pix' => $pagamento->pix($order),
+            'cartao' => $pagamento->cartao($order),
+            'boleto' => $pagamento->boleto($order),
+        };
+
+        $codigoPagamento = strtoupper($formaPagamento).'-'.now()->format('YmdHis').'-'.$order->id;
+        $pagamento->gerarDocumentoCompra($order, $request->ip(), $user->endereco, $codigoPagamento);
+
+        if ($pagamento->verificarComBanco($order->fresh())) {
+            $pagamento->enviarDocParaAnalise($order->fresh());
+        }
 
         return redirect()->route('orders.index')->with('status', 'Pedido #'.$order->id.' realizado com sucesso!');
     }

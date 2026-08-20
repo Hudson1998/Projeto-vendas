@@ -71,7 +71,10 @@
   }
 
   function atualizarTipoPessoa() {
-    const juridica = document.querySelector('input[name="tipo_pessoa"]:checked')?.value === 'juridica';
+    const radioSelecionado = document.querySelector('input[name="tipo_pessoa"]:checked');
+    if (!radioSelecionado) return;
+
+    const juridica = radioSelecionado.value === 'juridica';
 
     document.getElementById('bloco-cpf').style.display = juridica ? 'none' : 'block';
     document.getElementById('bloco-cnpj').style.display = juridica ? 'block' : 'none';
@@ -85,7 +88,10 @@
   }
 
   function atualizarIsencaoIe() {
-    const isento = document.getElementById('ie_isento').checked;
+    const campoIsento = document.getElementById('ie_isento');
+    if (!campoIsento) return;
+
+    const isento = campoIsento.checked;
     const campoIe = document.getElementById('inscricao_estadual');
     campoIe.disabled = isento;
     campoIe.required = !isento;
@@ -93,28 +99,43 @@
     if (isento) campoIe.value = '';
   }
 
-  document.querySelectorAll('[data-toggle-tipo-pessoa]').forEach((radio) => {
-    radio.addEventListener('change', atualizarTipoPessoa);
-  });
-  document.getElementById('ie_isento')?.addEventListener('change', atualizarIsencaoIe);
+  function initLojistaCadastro() {
+    const radios = document.querySelectorAll('[data-toggle-tipo-pessoa]');
+    if (!radios.length) return;
 
-  document.addEventListener('input', function (e) {
-    if (e.target.id === 'telefone') {
-      e.target.value = maskTelefone(e.target.value);
-      return;
-    }
-    if (e.target.id === 'cpf') {
-      e.target.value = maskCpf(e.target.value);
-      setHint(document.getElementById('cpf-hint'), cpfValido(e.target.value));
-      return;
-    }
-    if (e.target.id === 'cnpj') {
-      e.target.value = maskCnpj(e.target.value);
-      setHint(document.getElementById('cnpj-hint'), cnpjValido(e.target.value));
-      return;
-    }
-  });
+    radios.forEach((radio) => {
+      radio.addEventListener('change', atualizarTipoPessoa);
+    });
+    document.getElementById('ie_isento')?.addEventListener('change', atualizarIsencaoIe);
 
-  atualizarTipoPessoa();
-  atualizarIsencaoIe();
+    atualizarTipoPessoa();
+    atualizarIsencaoIe();
+  }
+
+  if (!window.__lojistaCadastroBound) {
+    window.__lojistaCadastroBound = true;
+
+    document.addEventListener('input', function (e) {
+      if (e.target.id === 'telefone') {
+        e.target.value = maskTelefone(e.target.value);
+        return;
+      }
+      if (e.target.id === 'cpf') {
+        e.target.value = maskCpf(e.target.value);
+        setHint(document.getElementById('cpf-hint'), cpfValido(e.target.value));
+        return;
+      }
+      if (e.target.id === 'cnpj') {
+        e.target.value = maskCnpj(e.target.value);
+        setHint(document.getElementById('cnpj-hint'), cnpjValido(e.target.value));
+        return;
+      }
+    });
+  }
+
+  if (window.registerPageInit) {
+    window.registerPageInit(initLojistaCadastro);
+  } else {
+    initLojistaCadastro();
+  }
 })();

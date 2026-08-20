@@ -13,6 +13,7 @@
 .admin-sidebar {
   width: 250px;
   flex-shrink: 0;
+  align-self: flex-start;
   display: flex;
   flex-direction: column;
   background: var(--bg-alt);
@@ -313,6 +314,29 @@
 .admin-table strong {
   color: var(--fg);
   font-weight: 400;
+}
+.admin-table__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.loja-inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.loja-inline-form select,
+.loja-inline-form input[type="text"] {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  padding: 6px 8px;
+  font-size: 12px;
+}
+.loja-chart {
+  width: 100%;
+  overflow-x: auto;
 }
 .admin-badge {
   display: inline-block;

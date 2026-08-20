@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Pages\PaginaInicial;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -11,7 +12,9 @@ class ProfileController extends Controller
 {
     public function edit(Request $request): View
     {
-        return view('profile.edit', ['user' => $request->user()]);
+        $user = (new PaginaInicial)->perfil($request->user()->id);
+
+        return view('profile.edit', ['user' => $user]);
     }
 
     public function update(Request $request): RedirectResponse

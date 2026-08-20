@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\LojistaProfile;
 use App\Models\User;
+use App\Pages\PaginaLoja;
 use App\Rules\Cnpj;
 use App\Rules\Cpf;
 use App\Rules\InscricaoEstadual;
@@ -74,9 +74,11 @@ class LojistaAuthController extends Controller
 
         $ieIsento = $request->boolean('ie_isento');
 
-        LojistaProfile::create([
+        $loja = (new PaginaLoja)->cadastrar([
             'user_id' => $user->id,
-            'telefone' => $data['telefone'],
+            'nome_responsavel' => $data['name'],
+            'email' => $data['email'],
+            'whatsapp' => $data['telefone'],
             'nome_fantasia' => $data['nome_fantasia'],
             'tipo_pessoa' => $data['tipo_pessoa'],
             'cpf' => isset($data['cpf']) ? preg_replace('/\D/', '', $data['cpf']) : null,
@@ -85,21 +87,23 @@ class LojistaAuthController extends Controller
             'inscricao_estadual' => $ieIsento ? null : preg_replace('/\D/', '', $data['inscricao_estadual']),
             'ie_isento' => $ieIsento,
             'logotipo' => $logotipoPath,
-            'descricao_loja' => $data['descricao_loja'],
-            'cep' => $data['cep'],
-            'rua' => $data['rua'],
-            'numero' => $data['numero'],
-            'complemento' => $data['complemento'] ?? null,
-            'bairro' => $data['bairro'],
-            'cidade' => $data['cidade'],
-            'estado' => strtoupper($data['estado']),
+            'bio_loja' => $data['descricao_loja'],
+            'fiscal_cep' => $data['cep'],
+            'fiscal_rua' => $data['rua'],
+            'fiscal_numero' => $data['numero'],
+            'fiscal_complemento' => $data['complemento'] ?? null,
+            'fiscal_bairro' => $data['bairro'],
+            'fiscal_cidade' => $data['cidade'],
+            'fiscal_estado' => strtoupper($data['estado']),
             'prazo_expedicao_dias_uteis' => $data['prazo_expedicao_dias_uteis'],
             'politica_troca_devolucao' => $data['politica_troca_devolucao'],
-            'doc_identidade_path' => $docIdentidadePath,
+            'documento_identidade_path' => $docIdentidadePath,
             'selfie_documento_path' => $selfiePath,
             'contrato_social_mei_path' => $contratoSocialPath,
             'comprovante_endereco_path' => $comprovanteEnderecoPath,
         ]);
+
+        (new PaginaLoja)->gerarDocumento($loja);
 
         Auth::login($user);
 

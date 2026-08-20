@@ -32,5 +32,5 @@
 <script>
   window.ADMIN_FATURAMENTO_URL = "{{ route('admin.faturamento.dados') }}";
 </script>
-<script src="{{ asset('js/faturamento.js') }}"></script>
+<script src="{{ asset_v('js/faturamento.js') }}"></script>
 @endsection
