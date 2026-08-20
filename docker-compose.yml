@@ -1,0 +1,51 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hr_moda_app
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www/html
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: hr_moda_feminina
+      DB_USERNAME: hr_user
+      DB_PASSWORD: hr_password
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - hr_moda_network
+
+  db:
+    image: mysql:8.0
+    container_name: hr_moda_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: hr_moda_feminina
+      MYSQL_USER: hr_user
+      MYSQL_PASSWORD: hr_password
+      MYSQL_ROOT_PASSWORD: root_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot_password"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - hr_moda_network
+
+volumes:
+  db_data:
+
+networks:
+  hr_moda_network:
+    driver: bridge

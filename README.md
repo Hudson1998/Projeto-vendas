@@ -26,24 +26,89 @@ A vitrine (hero, coleção com filtro por categoria e busca, seção sobre e con
 └── public/assets/                             # imagens dos produtos
 ```
 
-## ⚙️ Como rodar
+## 🐳 Como rodar (Docker — recomendado)
 
-Requer PHP 8.2+, Composer e MySQL.
+Forma mais simples de iniciar o projeto: não precisa instalar PHP, Composer ou MySQL na máquina.
+
+### Pré-requisitos
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado e em execução (inclui o Docker Compose)
+- Git (para clonar o repositório)
+
+### Passo a passo
+
+1. Clone o repositório e entre na pasta:
+   ```bash
+   git clone <url-do-repositorio>
+   cd "Projeto vendas"
+   ```
+2. Suba os containers (a primeira vez baixa as imagens e builda a aplicação, pode demorar alguns minutos):
+   ```bash
+   docker compose up -d --build
+   ```
+3. Aguarde a inicialização. Na primeira subida o container `app` automaticamente:
+   - instala as dependências do Composer;
+   - copia `.env.example` para `.env` e gera a `APP_KEY`;
+   - aguarda o MySQL ficar disponível e roda as migrations.
+
+   Acompanhe o processo, se quiser, com:
+   ```bash
+   docker compose logs -f app
+   ```
+4. Acesse a aplicação em **http://localhost:8000**.
+5. (Opcional) Popule o banco com dados de exemplo e o usuário admin:
+   ```bash
+   docker compose exec app php artisan db:seed
+   ```
+
+Isso sobe dois containers:
+
+- **app** — PHP 8.2 + Apache servindo o Laravel (`http://localhost:8000`)
+- **db** — MySQL 8.0 (porta `3306`, dados persistidos no volume `db_data`)
+
+As credenciais do banco usadas pelo container já vêm definidas no `docker-compose.yml` (variáveis `DB_*` do serviço `app`), sobrescrevendo as do `.env` local — não é necessário configurar nada manualmente.
+
+### Comandos úteis
 
 ```bash
-composer install
-cp .env.example .env
-php artisan key:generate
+docker compose logs -f app        # acompanhar logs da aplicação
+docker compose exec app php artisan migrate --seed   # rodar migrations + seeders
+docker compose exec app php artisan tinker            # tinker dentro do container
+docker compose down               # parar os containers (mantém os dados do banco)
+docker compose down -v            # parar e apagar também o volume do MySQL
 ```
 
-Configure `DB_DATABASE`, `DB_USERNAME` e `DB_PASSWORD` no `.env` (crie o banco `hr_moda_feminina` antes) e depois:
+O código-fonte é montado como volume (`.:/var/www/html`), então alterações nos arquivos refletem imediatamente sem rebuild — só é necessário `--build` novamente ao mudar o `Dockerfile` ou dependências do Composer.
 
-```bash
-php artisan migrate --seed
-php artisan serve
-```
+## ⚙️ Como rodar sem Docker
 
-A aplicação estará disponível em `http://localhost:8000`.
+### Pré-requisitos
+
+- PHP 8.2 ou superior (com extensões `pdo_mysql`, `mbstring`, `gd`, `zip`, `bcmath`)
+- [Composer](https://getcomposer.org/)
+- MySQL 8.0 (ou compatível)
+
+### Passo a passo
+
+1. Instale as dependências:
+   ```bash
+   composer install
+   ```
+2. Crie o arquivo de ambiente e gere a chave da aplicação:
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+3. Crie o banco `hr_moda_feminina` no MySQL e configure `DB_DATABASE`, `DB_USERNAME` e `DB_PASSWORD` no `.env`.
+4. Rode as migrations (e, opcionalmente, os seeders):
+   ```bash
+   php artisan migrate --seed
+   ```
+5. Inicie o servidor:
+   ```bash
+   php artisan serve
+   ```
+6. Acesse **http://localhost:8000**.
 
 ## 🤝 Contribuições
 
