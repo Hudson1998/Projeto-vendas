@@ -11,16 +11,21 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Order extends Model
 {
     /**
-     * As seis etapas da tela "Acompanhar pedido", na ordem em que aparecem.
+     * As etapas da tela "Acompanhar pedido", na ordem em que aparecem.
      *
-     * Nenhuma coluna nova: as tres primeiras saem de status_pagamento e as
+     * Nenhuma coluna nova: as quatro primeiras saem de status_pagamento e as
      * tres ultimas de status_separacao -- veja etapaAcompanhamento().
      */
     public const ETAPAS_ACOMPANHAMENTO = [
         [
             'rotulo' => 'Pendente de pagamento',
             'chip' => 'Aguardando pagamento',
-            'texto' => 'Estamos aguardando a confirmação do seu pagamento. Assim que cair, a loja é avisada automaticamente.',
+            'texto' => 'Ainda não identificamos o seu pagamento. Assim que ele for registrado, o pedido segue sozinho para a próxima etapa.',
+        ],
+        [
+            'rotulo' => 'Pagamento em análise',
+            'chip' => 'Em análise',
+            'texto' => 'Recebemos o seu pagamento e ele está em conferência. Assim que for aprovado, a loja é avisada automaticamente.',
         ],
         [
             'rotulo' => 'Pagamento aprovado',
@@ -100,11 +105,14 @@ class Order extends Model
         }
 
         return match ($this->status_separacao) {
-            'enviado' => 5,
-            'embalado' => 4,
-            'separado' => 3,
-            // 'pendente' e 'aguardando_analise' sao ambos espera de pagamento
-            default => $this->status_pagamento === 'aprovado' ? 2 : 0,
+            'enviado' => 6,
+            'embalado' => 5,
+            'separado' => 4,
+            default => match ($this->status_pagamento) {
+                'aprovado' => 3,
+                'aguardando_analise' => 1,
+                default => 0,
+            },
         };
     }
 

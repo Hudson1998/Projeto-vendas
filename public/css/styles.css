@@ -2050,7 +2050,9 @@ footer a:hover {
   position: relative;
   height: 1px;
   background: var(--border);
-  margin: 0 56px;
+  /* recua meia coluna de cada lado para a trilha nascer e morrer sob os nós
+     das pontas; acompanha a contagem de etapas sem precisar de novo valor */
+  margin: 0 calc(50% / 7);
 }
 .tracking-rail__fill {
   position: absolute;
@@ -2062,7 +2064,7 @@ footer a:hover {
 }
 .tracking-steps {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 0;
   margin: -9px 0 0;
   padding: 0;
