@@ -16,7 +16,9 @@ if ! grep -q "^APP_KEY=base64" .env; then
 fi
 
 # aguarda o MySQL aceitar conexoes antes de migrar
-until php artisan db:show > /dev/null 2>&1; do
+# usa PDO direto: "artisan db:show" formata numeros e exige a extensao intl,
+# falhando mesmo com o banco no ar (o loop nunca terminava e o Apache nao subia)
+until php -r 'new PDO("mysql:host=".getenv("DB_HOST").";port=".(getenv("DB_PORT") ?: 3306).";dbname=".getenv("DB_DATABASE"), getenv("DB_USERNAME"), getenv("DB_PASSWORD"));' > /dev/null 2>&1; do
     echo "Aguardando o banco de dados..."
     sleep 2
 done
