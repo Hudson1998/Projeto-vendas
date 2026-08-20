@@ -39,22 +39,22 @@ class CatalogoTesteSeeder extends Seeder
     private function criarProdutos(): void
     {
         $novos = [
-            ['Blusa de Tricô Canelada', 'Blusas', 129.90, null, 'blusa-trico.svg', 'Tricô canelado de toque macio, modelagem justa ao corpo.'],
-            ['Blusa Cropped Básica', 'Blusas', 79.90, 59.90, 'blusa-cropped.svg', 'Malha de algodão com caimento leve e barra cropped.'],
-            ['Blusa de Linho Manga Bufante', 'Blusas', 139.90, null, 'blusa-linho.svg', 'Linho leve com manga bufante e punho ajustado.'],
+            ['Blusa de Tricô Canelada', 'Blusas', 129.90, null, 'blusa-trico.jpg', 'Tricô canelado de toque macio, modelagem justa ao corpo.'],
+            ['Blusa Cropped Básica', 'Blusas', 79.90, 59.90, 'blusa-cropped.jpg', 'Malha de algodão com caimento leve e barra cropped.'],
+            ['Blusa de Linho Manga Bufante', 'Blusas', 139.90, null, 'blusa-linho.jpg', 'Linho leve com manga bufante e punho ajustado.'],
 
-            ['Casaco Trench Bege', 'Casacos', 349.90, 279.90, 'casaco-trench.svg', 'Trench clássico com cinto e forro interno.'],
-            ['Blazer Oversized', 'Casacos', 289.90, null, 'blazer-oversized.svg', 'Alfaiataria de caimento amplo, ombro estruturado.'],
+            ['Casaco Trench Bege', 'Casacos', 349.90, 279.90, 'casaco-trench.jpg', 'Trench clássico com cinto e forro interno.'],
+            ['Blazer Oversized', 'Casacos', 289.90, null, 'blazer-oversized.jpg', 'Alfaiataria de caimento amplo, ombro estruturado.'],
 
-            ['Scarpin Salto Fino', 'Calçados', 219.90, null, 'scarpin-salto.svg', 'Bico fino e salto de 8 cm forrado.'],
-            ['Tênis Branco Minimalista', 'Calçados', 199.90, 169.90, 'tenis-branco.svg', 'Couro liso, solado de borracha e cabedal sem estampas.'],
-            ['Bota Cano Curto', 'Calçados', 299.90, null, 'bota-cano-curto.svg', 'Cano curto com zíper lateral e salto bloco.'],
-            ['Sandália Tira Fina', 'Calçados', 159.90, null, 'sandalia-tira-fina.svg', 'Tiras finas com fivela ajustável no tornozelo.'],
+            ['Scarpin Salto Fino', 'Calçados', 219.90, null, 'scarpin-salto.jpg', 'Bico fino e salto de 8 cm forrado.'],
+            ['Tênis Branco Minimalista', 'Calçados', 199.90, 169.90, 'tenis-branco.jpg', 'Couro liso, solado de borracha e cabedal sem estampas.'],
+            ['Bota Cano Curto', 'Calçados', 299.90, null, 'bota-cano-curto.jpg', 'Cano curto com zíper lateral e salto bloco.'],
+            ['Sandália Tira Fina', 'Calçados', 159.90, null, 'sandalia-tira-fina.jpg', 'Tiras finas com fivela ajustável no tornozelo.'],
 
-            ['Óculos de Sol Redondo', 'Acessórios', 149.90, null, 'oculos-sol.svg', 'Armação metálica redonda com lente polarizada.'],
-            ['Relógio Dourado Slim', 'Acessórios', 279.90, null, 'relogio-dourado.svg', 'Caixa slim de 32 mm com pulseira de malha.'],
-            ['Brinco Argola Pequena', 'Acessórios', 69.90, null, 'brinco-argola.svg', 'Argola de 2 cm banhada, fecho de pressão.'],
-            ['Colar Corrente Fina', 'Acessórios', 89.90, null, 'colar-corrente.svg', 'Corrente veneziana de 45 cm com extensor.'],
+            ['Óculos de Sol Redondo', 'Acessórios', 149.90, null, 'oculos-sol.jpg', 'Armação metálica redonda com lente polarizada.'],
+            ['Relógio Dourado Slim', 'Acessórios', 279.90, null, 'relogio-dourado.jpg', 'Caixa slim de 32 mm com pulseira de malha.'],
+            ['Brinco Argola Pequena', 'Acessórios', 69.90, null, 'brinco-argola.jpg', 'Argola de 2 cm banhada, fecho de pressão.'],
+            ['Colar Corrente Fina', 'Acessórios', 89.90, null, 'colar-corrente.jpg', 'Corrente veneziana de 45 cm com extensor.'],
         ];
 
         foreach ($novos as [$nome, $categoria, $preco, $promocional, $imagem, $descricao]) {
