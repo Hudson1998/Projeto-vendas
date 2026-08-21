@@ -58,7 +58,7 @@ Forma mais simples de iniciar o projeto: não precisa instalar PHP, Composer ou 
 4. Acesse a aplicação em **http://localhost:8000**.
 5. (Opcional) Popule o banco com dados de exemplo e o usuário admin:
    ```bash
-   docker compose exec app php artisan db:seed
+   docker compose exec -u www-data app php artisan db:seed
    ```
 
 Isso sobe dois containers:
@@ -70,10 +70,16 @@ As credenciais do banco usadas pelo container já vêm definidas no `docker-comp
 
 ### Comandos úteis
 
+> **Rode o `artisan` como `www-data`** (`-u www-data`). Sem isso o comando roda
+> como root e qualquer arquivo de cache que ele gerar — principalmente as views
+> compiladas em `storage/framework/views` — fica com dono root, que o Apache não
+> consegue sobrescrever depois. A página passa a devolver **500** até o arquivo
+> ser removido ou o container reiniciar.
+
 ```bash
 docker compose logs -f app        # acompanhar logs da aplicação
-docker compose exec app php artisan migrate --seed   # rodar migrations + seeders
-docker compose exec app php artisan tinker            # tinker dentro do container
+docker compose exec -u www-data app php artisan migrate --seed   # migrations + seeders
+docker compose exec -u www-data app php artisan tinker            # tinker dentro do container
 docker compose down               # parar os containers (mantém os dados do banco)
 docker compose down -v            # parar e apagar também o volume do MySQL
 ```

@@ -29,6 +29,12 @@ if [ ! -L public/storage ]; then
     php artisan storage:link
 fi
 
+# descarta as views compiladas: rodar "artisan" via docker compose exec executa
+# como root e deixa o .php compilado com dono root, que o Apache (www-data) nao
+# consegue sobrescrever depois -- a pagina passa a devolver 500 ate o arquivo
+# sumir. Limpar no boot garante que tudo seja recompilado pelo dono certo.
+php artisan view:clear
+
 chown -R www-data:www-data storage bootstrap/cache public/uploads 2>/dev/null || true
 
 exec "$@"
