@@ -43,7 +43,11 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot_password"]
       interval: 5s
       timeout: 5s
-      retries: 10
+      # a primeira inicializacao do datadir do MySQL passa de 2min em maquina
+      # lenta; com 10 retries (50s) o compose desistia e derrubava o "app" com
+      # "dependency failed to start: db is unhealthy" mesmo dando tudo certo.
+      retries: 30
+      start_period: 30s
     networks:
       - hr_moda_network
 

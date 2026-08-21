@@ -1,0 +1,32 @@
+{
+  "name": "HR Moda Feminina (Laravel + MySQL)",
+
+  // reaproveita o mesmo compose usado localmente: um so lugar para manter
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/var/www/html",
+  "shutdownAction": "stopCompose",
+
+  // porta 80 e a que o Apache escuta dentro do container "app".
+  // o Codespaces publica ela como URL https e ja abre no navegador.
+  "forwardPorts": [80],
+  "portsAttributes": {
+    "80": {
+      "label": "Loja",
+      "onAutoForward": "openPreview"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "bmewburn.vscode-intelephense-client",
+        "onecentlin.laravel-blade",
+        "EditorConfig.EditorConfig"
+      ],
+      "settings": {
+        "files.eol": "\n"
+      }
+    }
+  }
+}
