@@ -11,6 +11,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Confia no cabecalho X-Forwarded-Proto do proxy que termina o TLS.
+        // Sem isso, atras de um proxy https (Codespaces, load balancer) o
+        // Laravel enxerga a requisicao como http e asset()/url() devolvem
+        // links http dentro de uma pagina https -- o navegador bloqueia como
+        // conteudo misto e a loja abre sem imagens e sem o JS do admin.
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
             'lojista' => \App\Http\Middleware\EnsureUserIsLojista::class,
