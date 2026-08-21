@@ -13,6 +13,7 @@ class Product extends Model
         'loja_id',
         'nome',
         'categoria',
+        'product_subclass_id',
         'preco',
         'preco_promocional',
         'imagem',
@@ -34,6 +35,11 @@ class Product extends Model
         return $this->belongsTo(Loja::class);
     }
 
+    public function subclass(): BelongsTo
+    {
+        return $this->belongsTo(ProductSubclass::class, 'product_subclass_id');
+    }
+
     public function reviews(): HasMany
     {
         return $this->hasMany(ProductReview::class);
@@ -47,6 +53,11 @@ class Product extends Model
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function classe(): ?ProductClass
+    {
+        return $this->subclass?->productClass;
     }
 
     public function estoqueTotal(): int

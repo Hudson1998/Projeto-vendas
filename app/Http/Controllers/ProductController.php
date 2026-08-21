@@ -45,6 +45,7 @@ class ProductController extends Controller
         $product = Product::create([
             'nome' => $data['nome'],
             'categoria' => $data['categoria'],
+            'product_subclass_id' => $data['product_subclass_id'] ?? null,
             'preco' => $data['preco'],
             'imagem' => 'uploads/'.$nomeArquivo,
             'descricao' => $data['descricao'] ?? null,
@@ -80,6 +81,7 @@ class ProductController extends Controller
         $product->update([
             'nome' => $data['nome'],
             'categoria' => $data['categoria'],
+            'product_subclass_id' => $data['product_subclass_id'] ?? null,
             'preco' => $data['preco'],
             'imagem' => $imagem,
             'descricao' => $data['descricao'] ?? null,
@@ -98,6 +100,7 @@ class ProductController extends Controller
         return $request->validate([
             'nome' => ['required', 'string', 'max:255'],
             'categoria' => ['required', 'string', 'max:255'],
+            'product_subclass_id' => ['nullable', 'integer', 'exists:product_subclasses,id'],
             'preco' => ['required', 'numeric', 'min:0'],
             'descricao' => ['nullable', 'string', 'max:5000'],
             'foto' => [$fotoRequired ? 'required' : 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],

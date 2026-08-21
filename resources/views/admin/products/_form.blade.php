@@ -1,4 +1,9 @@
 @php
+  $subclassesPorClasse = \App\Models\ProductSubclass::with('productClass')
+      ->get()
+      ->sortBy('nome')
+      ->groupBy(fn ($subclasse) => $subclasse->productClass->nome);
+
   $variantesIniciais = [];
   if (old('variantes_tamanho')) {
       foreach (old('variantes_tamanho') as $i => $tamanho) {
@@ -35,6 +40,20 @@
     <option value="" disabled {{ old('categoria', $product->categoria ?? '') ? '' : 'selected' }}>Selecione uma categoria</option>
     @foreach (['Camisas', 'Calças', 'Vestidos', 'Saias', 'Acessórios', 'Chapéus', 'Perfumes', 'Calçados'] as $opcao)
       <option value="{{ $opcao }}" @selected(old('categoria', $product->categoria ?? '') === $opcao)>{{ $opcao }}</option>
+    @endforeach
+  </select>
+</div>
+
+<div class="field">
+  <label for="product_subclass_id">Classe / Subclasse</label>
+  <select id="product_subclass_id" name="product_subclass_id">
+    <option value="">Sem classificação</option>
+    @foreach ($subclassesPorClasse as $classeNome => $subclasses)
+      <optgroup label="{{ $classeNome }}">
+        @foreach ($subclasses as $subclasse)
+          <option value="{{ $subclasse->id }}" @selected((int) old('product_subclass_id', $product->product_subclass_id ?? '') === $subclasse->id)>{{ $subclasse->nome }}</option>
+        @endforeach
+      </optgroup>
     @endforeach
   </select>
 </div>
