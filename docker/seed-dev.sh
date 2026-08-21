@@ -17,10 +17,16 @@ cd /var/www/html
 # boot). Sem esperar, os seeders quebram com "table not found".
 echo ">> aguardando o entrypoint terminar composer install + migrate"
 tentativas=0
-until php artisan migrate:status > /dev/null 2>&1; do
+# "migrate:status" passa a funcionar assim que a tabela migrations existe, ou
+# seja, no meio da migracao. Esperar so por ele deixava os seeders comecarem
+# com parte do schema no lugar -- o CatalogoTesteSeeder morria com "Unknown
+# column 'preco_promocional'" porque a migration dela ainda nao tinha rodado.
+# Por isso a espera exige tambem que nao reste nenhuma migration pendente.
+until php artisan migrate:status > /tmp/migrate-status.txt 2>&1 && ! grep -qi "pending" /tmp/migrate-status.txt; do
     tentativas=$((tentativas + 1))
     if [ "$tentativas" -gt 120 ]; then
-        echo "!! banco nao ficou pronto em 6 minutos; veja os logs do container app"
+        echo "!! migrations nao terminaram em 6 minutos; ultimo status:"
+        cat /tmp/migrate-status.txt
         exit 1
     fi
     sleep 3
