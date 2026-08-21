@@ -30,6 +30,10 @@
   // vazio e sem isso a loja abriria sem nenhum produto.
   "postCreateCommand": "sh docker/seed-dev.sh",
 
+  // roda a cada start (inclusive apos rebuild): traz os pushes sozinho, para
+  // que codar aqui fora e ver no navegador nao dependa de pull manual.
+  "postStartCommand": "sh docker/auto-pull.sh",
+
   "customizations": {
     "vscode": {
       "extensions": [
