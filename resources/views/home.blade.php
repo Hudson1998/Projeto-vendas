@@ -47,6 +47,7 @@
   <div class="wrap">
     <div class="section__header">
       <h2 class="section__title" id="collection-title">Coleção</h2>
+      <span class="section__count" id="collection-summary"></span>
     </div>
     <div class="product-grid" id="product-grid"></div>
     <div class="empty-state" id="empty-state">

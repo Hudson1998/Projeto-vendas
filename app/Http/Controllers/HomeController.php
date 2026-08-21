@@ -12,7 +12,8 @@ class HomeController extends Controller
         $paginaInicial = new PaginaInicial;
 
         return view('home', [
-            'produtos' => $paginaInicial->filtro(),
+            'produtos' => $paginaInicial->vitrine(),
+            'arvoreFiltros' => $paginaInicial->arvoreDeFiltros(),
             'carrosselMaisComprados' => $paginaInicial->carrosselMaisComprados(10),
             'carrosselMaisVisitados' => $paginaInicial->carrosselMaisVisitados(10),
             'carrosselPromocoes' => $paginaInicial->carrosselPromocoes(10),

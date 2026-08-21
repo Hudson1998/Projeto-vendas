@@ -90,50 +90,57 @@ img {
   gap: 12px;
   justify-self: center;
 }
-.category-dropdown {
+/* Filtro da vitrine (substitui o antigo dropdown de categoria) */
+.filter-dropdown {
   position: relative;
 }
-.category-toggle {
+.filter-toggle {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  width: 39px;
   height: 39px;
-  padding: 0 16px;
+  flex-shrink: 0;
+  padding: 0;
   background: transparent;
   border: 1px solid var(--border-strong);
   color: var(--fg);
-  font-family: "Jost", sans-serif;
-  font-weight: 300;
-  font-size: 13px;
-  letter-spacing: 0.06em;
   cursor: pointer;
   transition: border-color 0.25s ease;
 }
-.category-toggle:hover {
+.filter-toggle:hover,
+.filter-dropdown.is-open .filter-toggle {
   border-color: var(--line);
 }
-.category-dropdown.is-open .category-toggle {
-  border-color: var(--line);
+.filter-toggle__badge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--fg);
+  color: var(--bg);
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.category-chevron {
-  flex-shrink: 0;
-  color: var(--muted);
-  transition: transform 0.25s ease;
+.filter-toggle__badge[hidden] {
+  display: none;
 }
-.category-dropdown.is-open .category-chevron {
-  transform: rotate(180deg);
-}
-.category-menu {
+.filter-panel {
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
   z-index: 60;
-  min-width: 200px;
-  max-height: 320px;
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  max-height: min(70vh, 560px);
   overflow-y: auto;
-  margin: 0;
-  padding: 6px 0;
-  list-style: none;
   background: var(--bg);
   border: 1px solid var(--border-strong);
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.35);
@@ -142,33 +149,163 @@ img {
   transform: translateY(-8px);
   transition: opacity 0.22s ease, transform 0.22s ease, visibility 0.22s;
 }
-.category-dropdown.is-open .category-menu {
+.filter-dropdown.is-open .filter-panel {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
 }
-.category-option {
-  display: block;
-  width: 100%;
-  text-align: left;
+.filter-panel__head,
+.filter-panel__foot {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+}
+.filter-panel__head {
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.filter-panel__foot {
+  justify-content: flex-end;
+  border-top: 1px solid var(--border);
+}
+.filter-panel__eyebrow {
+  font-weight: 300;
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--muted-dim);
+}
+.filter-panel__clear {
   background: none;
   border: none;
-  color: var(--muted);
+  padding: 0;
+  color: var(--muted-dim);
   font-family: "Jost", sans-serif;
   font-weight: 300;
-  font-size: 13px;
+  font-size: 12px;
   letter-spacing: 0.06em;
-  padding: 10px 16px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+.filter-panel__clear.is-active {
+  color: var(--muted);
+}
+.filter-panel__clear.is-active:hover {
+  color: var(--fg);
+}
+.filter-panel__apply {
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--fg);
+  font-family: "Jost", sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 9px 22px;
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
 }
-.category-option:hover {
+.filter-panel__apply:hover {
+  background: var(--fg);
+  color: var(--bg);
+}
+.filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+}
+.filter-section:first-child {
+  border-top: none;
+}
+/* ordenacao nao filtra nada, so reordena: o fundo separa as duas coisas */
+.filter-section--ordenar {
   background: var(--bg-alt);
+}
+.filter-section__label {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-weight: 300;
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--muted-dim);
+}
+.filter-section__hint {
+  font-weight: 300;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  color: var(--line);
+}
+.filter-section__vazio {
+  font-weight: 300;
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  color: var(--muted-dim);
+}
+.filter-tabs {
+  display: flex;
+  border: 1px solid var(--border);
+}
+.filter-tab {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 8px 4px;
+  color: var(--muted);
+  font-family: "Jost", sans-serif;
+  font-weight: 300;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.filter-tab:hover {
   color: var(--fg);
 }
-.category-option.is-active {
-  color: var(--fg);
+.filter-tab.is-active {
+  background: var(--fg);
+  color: var(--bg);
   font-weight: 500;
+}
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.filter-chip {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: "Jost", sans-serif;
+  font-weight: 300;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  padding: 6px 11px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+.filter-chip:hover {
+  border-color: var(--line);
+  color: var(--fg);
+}
+.filter-chip.is-active {
+  border-color: var(--line);
+  color: var(--fg);
+}
+.filter-chip--tamanho {
+  min-width: 42px;
+}
+.filter-chip--tamanho.is-active {
+  background: var(--fg);
+  border-color: var(--fg);
+  color: var(--bg);
 }
 .search-box {
   display: flex;
@@ -1253,21 +1390,11 @@ footer a:hover {
     right: -14px;
     min-width: 210px;
   }
-  .category-menu {
-    max-width: calc(100vw - 40px);
+  .filter-panel {
+    max-width: calc(100vw - 24px);
   }
   .header-account {
     gap: 14px;
-  }
-  .category-toggle {
-    padding: 0 10px;
-    gap: 6px;
-  }
-  .category-toggle span {
-    max-width: 60px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
   .search-box {
     padding: 9px 10px;

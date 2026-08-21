@@ -18,11 +18,6 @@
 
 <div id="ajax-content">
 @php
-  $categoriasDropdown = collect(['Camisas', 'Calças', 'Acessórios', 'Chapéus', 'Perfumes', 'Calçados', 'Vestidos', 'Saias'])
-      ->merge(\App\Models\Product::query()->distinct()->pluck('categoria'))
-      ->unique()
-      ->values();
-
   $quantidadeCarrinho = auth()->check()
       ? \App\Models\CartItem::where('user_id', auth()->id())->sum('quantidade')
       : 0;
@@ -43,18 +38,27 @@
     </a>
 
     <div class="header-search">
-      <div class="category-dropdown" id="category-dropdown">
-        <button type="button" id="category-toggle" class="category-toggle" aria-haspopup="listbox" aria-expanded="false">
-          <span id="category-label">Todos</span>
-          <svg class="category-chevron" width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
-        </button>
-        <ul class="category-menu" id="category-menu" role="listbox">
-          <li role="presentation"><button type="button" class="category-option is-active" data-cat="Todos" role="option">Todos</button></li>
-          @foreach ($categoriasDropdown as $categoria)
-            <li role="presentation"><button type="button" class="category-option" data-cat="{{ $categoria }}" role="option">{{ $categoria }}</button></li>
-          @endforeach
-        </ul>
-      </div>
+      {{-- so aparece onde existe vitrine para filtrar: fora da home o painel
+           nao teria dados e viraria um controle morto no header --}}
+      @isset($produtos)
+        <div class="filter-dropdown" id="filter-dropdown">
+          <button type="button" id="filter-toggle" class="filter-toggle" aria-haspopup="dialog" aria-expanded="false" aria-controls="filter-panel" title="Filtrar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="7" y1="12" x2="17" y2="12"></line><line x1="10" y1="18" x2="14" y2="18"></line></svg>
+            <span class="filter-toggle__badge" id="filter-badge" hidden>0</span>
+          </button>
+          <div class="filter-panel" id="filter-panel" role="dialog" aria-label="Filtrar produtos">
+            <div class="filter-panel__head">
+              <span class="filter-panel__eyebrow">Filtrar</span>
+              <button type="button" class="filter-panel__clear" id="filter-clear">Limpar tudo</button>
+            </div>
+            {{-- montado pelo app.js a partir de window.FILTRO_ARVORE --}}
+            <div id="filter-body"></div>
+            <div class="filter-panel__foot">
+              <button type="button" class="filter-panel__apply" id="filter-apply">Aplicar</button>
+            </div>
+          </div>
+        </div>
+      @endisset
       <div class="search-box">
         <button type="button" id="search-icon" class="search-icon" title="Buscar">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a8a8ae" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.5" y2="16.5"></line></svg>
@@ -227,12 +231,19 @@
         'categoria' => $p->categoria,
         'url' => asset($p->imagem),
         'favoritado' => $favoritosIds->contains($p->id),
+        // usados pelos filtros da vitrine; os carrosseis nao carregam esses
+        // agregados e caem no valor neutro
+        'precoNumerico' => (float) ($p->preco_promocional ?? $p->preco),
+        'vendas' => (int) ($p->quantidade_vendida ?? 0),
+        'visualizacoes' => (int) ($p->visualizacoes ?? 0),
+        'tamanhos' => $p->tamanhos_disponiveis ?? [],
     ]);
 
     $produtosParaJs = $mapParaJs($produtos);
   @endphp
   <script>
     window.PRODUTOS = @json($produtosParaJs);
+    window.FILTRO_ARVORE = @json($arvoreFiltros ?? []);
     window.CARROSSEL_MAIS_COMPRADOS = @json($mapParaJs($carrosselMaisComprados ?? collect()));
     window.CARROSSEL_MAIS_VISITADOS = @json($mapParaJs($carrosselMaisVisitados ?? collect()));
     window.CARROSSEL_PROMOCOES = @json($mapParaJs($carrosselPromocoes ?? collect()));

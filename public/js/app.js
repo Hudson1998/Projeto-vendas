@@ -158,6 +158,192 @@
     container.innerHTML = botoes;
   }
 
+  /* Filtros da vitrine.
+
+     A arvore vem de window.FILTRO_ARVORE, montada em PaginaInicial::arvoreDeFiltros
+     a partir das categorias que existem de fato em products.categoria -- por isso
+     o painel nunca oferece um caminho que cai em colecao vazia. */
+  const FAIXAS_PRECO = [
+    { id: 'ate-100', rotulo: 'Até R$ 100', min: 0, max: 100 },
+    { id: '100-300', rotulo: 'R$ 100 a 300', min: 100, max: 300 },
+    { id: '300-600', rotulo: 'R$ 300 a 600', min: 300, max: 600 },
+    { id: 'acima-600', rotulo: 'Acima de R$ 600', min: 600, max: Infinity },
+  ];
+
+  const ORDENACOES = [
+    { id: 'relevancia', rotulo: 'Relevância' },
+    { id: 'mais-vendidos', rotulo: 'Mais vendidos' },
+    { id: 'mais-vistos', rotulo: 'Mais vistos' },
+    { id: 'menor-preco', rotulo: 'Menor preço' },
+    { id: 'maior-preco', rotulo: 'Maior preço' },
+  ];
+
+  const ORDEM_TAMANHOS = ['PP', 'P', 'M', 'G', 'GG', 'Único'];
+
+  const ESCAPES_HTML = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  };
+
+  // nomes de categoria vem do cadastro do admin e entram em atributo HTML
+  function escapar(valor) {
+    return String(valor).replace(/[&<>"']/g, (c) => ESCAPES_HTML[c]);
+  }
+
+  function arvoreFiltros() {
+    return window.FILTRO_ARVORE || [];
+  }
+
+  function familiaAtual() {
+    if (!gridState || !gridState.familia) return null;
+    return arvoreFiltros().find((f) => f.familia === gridState.familia) || null;
+  }
+
+  function ordenarTamanhos(lista) {
+    return lista.slice().sort((a, b) => {
+      const ia = ORDEM_TAMANHOS.indexOf(a);
+      const ib = ORDEM_TAMANHOS.indexOf(b);
+      // numero de calcado nao esta na ordem fixa: cai no natural (34 < 35)
+      if (ia === -1 && ib === -1) return a.localeCompare(b, 'pt-BR', { numeric: true });
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+  }
+
+  function gradeAtual() {
+    const familia = familiaAtual();
+    if (familia) return familia.grade || [];
+
+    const todas = [];
+    arvoreFiltros().forEach((f) => {
+      (f.grade || []).forEach((t) => {
+        if (todas.indexOf(t) === -1) todas.push(t);
+      });
+    });
+    return ordenarTamanhos(todas);
+  }
+
+  function ordenar(lista) {
+    if (gridState.ordem === 'mais-vendidos') {
+      lista.sort((a, b) => (b.vendas || 0) - (a.vendas || 0));
+    } else if (gridState.ordem === 'mais-vistos') {
+      lista.sort((a, b) => (b.visualizacoes || 0) - (a.visualizacoes || 0));
+    } else if (gridState.ordem === 'menor-preco') {
+      lista.sort((a, b) => (a.precoNumerico || 0) - (b.precoNumerico || 0));
+    } else if (gridState.ordem === 'maior-preco') {
+      lista.sort((a, b) => (b.precoNumerico || 0) - (a.precoNumerico || 0));
+    }
+    // relevancia mantem a ordem que o servidor mandou (categoria, nome)
+  }
+
+  function contarFiltros() {
+    let total = 0;
+    if (gridState.familia) total++;
+    if (gridState.categoria) total++;
+    if (gridState.faixa) total++;
+    if (gridState.tamanhos.length) total++;
+    return total;
+  }
+
+  function tituloDaColecao() {
+    if (gridState.categoria) return gridState.categoria;
+    if (gridState.familia) return gridState.familia;
+    return 'Coleção';
+  }
+
+  function resumoDosFiltros(total) {
+    const partes = [total + (total === 1 ? ' peça' : ' peças')];
+    if (gridState.tamanhos.length) partes.push('tam ' + gridState.tamanhos.join('/'));
+    const faixa = FAIXAS_PRECO.find((f) => f.id === gridState.faixa);
+    if (faixa) partes.push(faixa.rotulo);
+    const ordem = ORDENACOES.find((o) => o.id === gridState.ordem);
+    if (ordem && ordem.id !== 'relevancia') partes.push(ordem.rotulo.toLowerCase());
+    return partes.join(' · ');
+  }
+
+  function chipFiltro(rotulo, atributo, valor, ativo, extra) {
+    return `<button type="button" class="filter-chip ${extra || ''} ${ativo ? 'is-active' : ''}" ${atributo}="${escapar(valor)}">${escapar(rotulo)}</button>`;
+  }
+
+  function montarPainelFiltros() {
+    const corpo = document.getElementById('filter-body');
+    if (!corpo || !gridState) return;
+
+    const familia = familiaAtual();
+    const folhas = familia ? familia.folhas || [] : [];
+    const grade = gradeAtual();
+
+    let abas = `<button type="button" class="filter-tab ${!gridState.familia ? 'is-active' : ''}" data-familia="">Todas</button>`;
+    arvoreFiltros().forEach((f) => {
+      abas += `<button type="button" class="filter-tab ${gridState.familia === f.familia ? 'is-active' : ''}" data-familia="${escapar(f.familia)}">${escapar(f.familia)}</button>`;
+    });
+
+    let html = `<div class="filter-section">
+        <span class="filter-section__label">Categoria</span>
+        <div class="filter-tabs">${abas}</div>`;
+
+    if (folhas.length) {
+      html += `<div class="filter-chips">${folhas
+        .map((c) => chipFiltro(c, 'data-categoria', c, gridState.categoria === c))
+        .join('')}</div>`;
+    } else if (familia) {
+      html += `<p class="filter-section__vazio">O catálogo ainda não separa ${escapar(familia.familia.toLowerCase())} em subcategorias.</p>`;
+    }
+
+    html += `</div>`;
+
+    if (grade.length) {
+      html += `<div class="filter-section">
+        <span class="filter-section__label">Tamanho <span class="filter-section__hint">pode marcar mais de um</span></span>
+        <div class="filter-chips">${grade
+          .map((t) => chipFiltro(t, 'data-tamanho', t, gridState.tamanhos.indexOf(t) !== -1, 'filter-chip--tamanho'))
+          .join('')}</div>
+      </div>`;
+    }
+
+    html += `<div class="filter-section">
+        <span class="filter-section__label">Preço</span>
+        <div class="filter-chips">${FAIXAS_PRECO
+          .map((f) => chipFiltro(f.rotulo, 'data-faixa', f.id, gridState.faixa === f.id))
+          .join('')}</div>
+      </div>
+      <div class="filter-section filter-section--ordenar">
+        <span class="filter-section__label">Ordenar por</span>
+        <div class="filter-chips">${ORDENACOES
+          .map((o) => chipFiltro(o.rotulo, 'data-ordem', o.id, gridState.ordem === o.id))
+          .join('')}</div>
+      </div>`;
+
+    corpo.innerHTML = html;
+
+    const quantos = contarFiltros();
+    const badge = document.getElementById('filter-badge');
+    if (badge) {
+      badge.textContent = quantos;
+      badge.hidden = quantos === 0;
+    }
+
+    const limpar = document.getElementById('filter-clear');
+    if (limpar) limpar.classList.toggle('is-active', quantos > 0 || gridState.ordem !== 'relevancia');
+  }
+
+  function aplicarFiltro(mudanca) {
+    Object.assign(gridState, mudanca, { pagina: 1 });
+    montarPainelFiltros();
+    renderProductGrid();
+  }
+
+  function fecharPainelFiltros() {
+    const dropdown = document.getElementById('filter-dropdown');
+    if (dropdown) dropdown.classList.remove('is-open');
+    const toggle = document.getElementById('filter-toggle');
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+  }
+
   function renderProductGrid() {
     const productGrid = document.getElementById('product-grid');
     if (!productGrid || !gridState) return;
@@ -165,11 +351,23 @@
     const PRODUTOS = window.PRODUTOS || [];
     const catalogoVazio = PRODUTOS.length === 0;
     const q = gridState.busca.trim().toLowerCase();
-    const filtrados = PRODUTOS.filter(
-      (p) =>
-        (gridState.cat === 'Todos' || p.categoria === gridState.cat) &&
-        (!q || p.nome.toLowerCase().includes(q) || p.categoria.toLowerCase().includes(q))
-    );
+    const familia = familiaAtual();
+    // familia sem folha escolhida vale por todas as categorias dela
+    const categorias = gridState.categoria ? [gridState.categoria] : (familia ? familia.categorias : null);
+    const faixa = FAIXAS_PRECO.find((f) => f.id === gridState.faixa);
+
+    const filtrados = PRODUTOS.filter((p) => {
+      if (categorias && categorias.indexOf(p.categoria) === -1) return false;
+      if (faixa && !(p.precoNumerico >= faixa.min && p.precoNumerico < faixa.max)) return false;
+      if (gridState.tamanhos.length) {
+        const tamanhos = p.tamanhos || [];
+        if (!gridState.tamanhos.some((t) => tamanhos.indexOf(t) !== -1)) return false;
+      }
+      if (q && !p.nome.toLowerCase().includes(q) && !p.categoria.toLowerCase().includes(q)) return false;
+      return true;
+    });
+
+    ordenar(filtrados);
 
     const totalPaginas = Math.max(1, Math.ceil(filtrados.length / PRODUTOS_POR_PAGINA));
     if (gridState.pagina > totalPaginas) gridState.pagina = totalPaginas;
@@ -187,7 +385,10 @@
     const emptyState = document.getElementById('empty-state');
     const collectionTitle = document.getElementById('collection-title');
     if (emptyState) emptyState.classList.toggle('is-visible', filtrados.length === 0 && !catalogoVazio);
-    if (collectionTitle) collectionTitle.textContent = gridState.cat === 'Todos' ? 'Coleção' : gridState.cat;
+    if (collectionTitle) collectionTitle.textContent = tituloDaColecao();
+
+    const collectionSummary = document.getElementById('collection-summary');
+    if (collectionSummary) collectionSummary.textContent = resumoDosFiltros(filtrados.length);
 
     renderPaginacao(totalPaginas);
   }
@@ -243,7 +444,16 @@
       gridState = null;
       return;
     }
-    gridState = { cat: 'Todos', busca: '', pagina: 1 };
+    gridState = {
+      familia: null,
+      categoria: null,
+      tamanhos: [],
+      faixa: null,
+      ordem: 'relevancia',
+      busca: '',
+      pagina: 1,
+    };
+    montarPainelFiltros();
     renderProductGrid();
     initCarrosseis();
   }
@@ -255,28 +465,78 @@
     setupGlobalListeners.done = true;
 
     document.addEventListener('click', (e) => {
-      const categoryToggle = e.target.closest('#category-toggle');
-      const categoryDropdown = document.getElementById('category-dropdown');
-      if (categoryToggle && categoryDropdown) {
+      const filterToggle = e.target.closest('#filter-toggle');
+      const filterDropdown = document.getElementById('filter-dropdown');
+      if (filterToggle && filterDropdown) {
         e.stopPropagation();
-        const isOpen = categoryDropdown.classList.toggle('is-open');
-        categoryToggle.setAttribute('aria-expanded', String(isOpen));
+        const isOpen = filterDropdown.classList.toggle('is-open');
+        filterToggle.setAttribute('aria-expanded', String(isOpen));
         return;
       }
 
-      const categoryOption = e.target.closest('.category-option');
-      if (categoryOption && gridState) {
-        gridState.cat = categoryOption.dataset.cat;
-        gridState.pagina = 1;
-        const label = document.getElementById('category-label');
-        if (label) label.textContent = categoryOption.dataset.cat;
-        document.querySelectorAll('.category-option').forEach((o) => o.classList.toggle('is-active', o === categoryOption));
-        const dd = document.getElementById('category-dropdown');
-        const dt = document.getElementById('category-toggle');
-        if (dd) dd.classList.remove('is-open');
-        if (dt) dt.setAttribute('aria-expanded', 'false');
-        renderProductGrid();
-        return;
+      if (filterDropdown && filterDropdown.classList.contains('is-open') && !filterDropdown.contains(e.target)) {
+        fecharPainelFiltros();
+      }
+
+      if (gridState) {
+        const abaFamilia = e.target.closest('.filter-tab');
+        if (abaFamilia) {
+          // trocar de familia zera folha e tamanho: a grade de calcado (34-40)
+          // nao vale para roupa (PP-GG)
+          aplicarFiltro({
+            familia: abaFamilia.dataset.familia || null,
+            categoria: null,
+            tamanhos: [],
+          });
+          return;
+        }
+
+        const chipCategoria = e.target.closest('[data-categoria]');
+        if (chipCategoria) {
+          const valor = chipCategoria.dataset.categoria;
+          aplicarFiltro({ categoria: gridState.categoria === valor ? null : valor });
+          return;
+        }
+
+        const chipTamanho = e.target.closest('[data-tamanho]');
+        if (chipTamanho) {
+          const valor = chipTamanho.dataset.tamanho;
+          const escolhidos = gridState.tamanhos.slice();
+          const posicao = escolhidos.indexOf(valor);
+          if (posicao === -1) escolhidos.push(valor);
+          else escolhidos.splice(posicao, 1);
+          aplicarFiltro({ tamanhos: escolhidos });
+          return;
+        }
+
+        const chipFaixa = e.target.closest('[data-faixa]');
+        if (chipFaixa) {
+          const valor = chipFaixa.dataset.faixa;
+          aplicarFiltro({ faixa: gridState.faixa === valor ? null : valor });
+          return;
+        }
+
+        const chipOrdem = e.target.closest('[data-ordem]');
+        if (chipOrdem) {
+          aplicarFiltro({ ordem: chipOrdem.dataset.ordem });
+          return;
+        }
+
+        if (e.target.closest('#filter-clear')) {
+          aplicarFiltro({
+            familia: null,
+            categoria: null,
+            tamanhos: [],
+            faixa: null,
+            ordem: 'relevancia',
+          });
+          return;
+        }
+
+        if (e.target.closest('#filter-apply')) {
+          fecharPainelFiltros();
+          return;
+        }
       }
 
       const carrosselPrev = e.target.closest('[data-carousel-prev]');
@@ -299,13 +559,6 @@
         renderProductGrid();
         document.getElementById('colecao')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         return;
-      }
-
-      const ddOpen = document.getElementById('category-dropdown');
-      if (ddOpen && ddOpen.classList.contains('is-open') && !ddOpen.contains(e.target)) {
-        ddOpen.classList.remove('is-open');
-        const t = document.getElementById('category-toggle');
-        if (t) t.setAttribute('aria-expanded', 'false');
       }
 
       const profileToggle = e.target.closest('#profile-toggle');
@@ -363,12 +616,7 @@
 
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape') return;
-      const dd = document.getElementById('category-dropdown');
-      if (dd) {
-        dd.classList.remove('is-open');
-        const t = document.getElementById('category-toggle');
-        if (t) t.setAttribute('aria-expanded', 'false');
-      }
+      fecharPainelFiltros();
       const pd = document.getElementById('profile-dropdown');
       if (pd) {
         pd.classList.remove('is-open');

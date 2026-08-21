@@ -9,6 +9,7 @@ use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\PageVisit;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\SearchLog;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
@@ -43,6 +44,141 @@ class PaginaInicial implements PagInicial
             ->orderBy('categoria')
             ->orderBy('nome')
             ->get();
+    }
+
+    /**
+     * Catalogo da vitrine com o que os filtros da home precisam alem do produto:
+     * quanto ja vendeu, quantas visitas teve e quais tamanhos ainda tem estoque.
+     */
+    public function vitrine(): Collection
+    {
+        $produtos = Product::query()
+            ->withSum(['orderItems as quantidade_vendida' => function ($query) {
+                $query->whereHas('order', fn ($q) => $q->where('status', 'concluido'));
+            }], 'quantidade')
+            ->orderBy('categoria')
+            ->orderBy('nome')
+            ->get();
+
+        $tamanhos = ProductVariant::query()
+            ->whereNotNull('tamanho')
+            ->where('estoque', '>', 0)
+            ->select('product_id', 'tamanho')
+            ->distinct()
+            ->get()
+            ->groupBy('product_id')
+            ->map(fn ($linhas) => $linhas->pluck('tamanho')->all());
+
+        // mesma leitura do carrosselMaisVisitados: o LogPageVisit so guarda o
+        // caminho, entao o id do produto sai de "produtos/<id>". Uma coluna
+        // product_id em page_visits evitaria este parsing.
+        $visitas = PageVisit::query()
+            ->where('path', 'like', 'produtos/%')
+            ->select('path', DB::raw('COUNT(*) as visitas'))
+            ->groupBy('path')
+            ->get()
+            ->mapWithKeys(fn ($visita) => [
+                (int) str_replace('produtos/', '', $visita->path) => (int) $visita->visitas,
+            ]);
+
+        return $produtos->each(function (Product $produto) use ($tamanhos, $visitas) {
+            $produto->setAttribute('tamanhos_disponiveis', $tamanhos->get($produto->id, []));
+            $produto->setAttribute('visualizacoes', $visitas->get($produto->id, 0));
+        });
+    }
+
+    /**
+     * Estrutura do filtro da home: familia => categorias e grade de tamanhos.
+     *
+     * O esqueleto vem da arvore de classes de app/Classes (Produto -> Roupa,
+     * Calcado, Acessorio), mas so entram categorias que existem de fato em
+     * products.categoria. O dropdown antigo era uma lista fixa e por isso
+     * escondia Blusas e Casacos enquanto oferecia Chapeus e Perfumes, que nao
+     * tem nenhum produto. Lendo do banco, o filtro nunca oferece caminho vazio
+     * e passa a mostrar as folhas sozinho quando o catalogo for subdividido.
+     */
+    public function arvoreDeFiltros(): array
+    {
+        $taxonomia = [
+            'Roupas' => ['Blusas', 'Calças', 'Camisas', 'Casacos', 'Saias', 'Vestidos', 'Roupa Íntima', 'Meias'],
+            'Calçados' => ['Botas', 'Chinelos', 'Pantufas', 'Saltos', 'Sandálias', 'Tênis'],
+            'Acessórios' => ['Anéis', 'Bonés', 'Braceletes', 'Brincos', 'Chapéus', 'Cordões', 'Óculos', 'Perfumes', 'Pulseiras', 'Relógios'],
+        ];
+
+        $categorias = Product::query()->distinct()->pluck('categoria')->filter()->values();
+
+        $arvore = [];
+        $mapeadas = [];
+
+        foreach ($taxonomia as $familia => $folhas) {
+            // a familia responde pelas folhas e tambem pelo proprio nome: hoje o
+            // banco grava "Calçados" e "Acessórios" sem subdividir em folhas
+            $daFamilia = $categorias
+                ->filter(fn ($categoria) => $categoria === $familia || in_array($categoria, $folhas, true))
+                ->values();
+
+            if ($daFamilia->isEmpty()) {
+                continue;
+            }
+
+            $mapeadas = array_merge($mapeadas, $daFamilia->all());
+
+            $arvore[] = [
+                'familia' => $familia,
+                'categorias' => $daFamilia->all(),
+                'folhas' => $daFamilia->reject(fn ($categoria) => $categoria === $familia)->values()->all(),
+                'grade' => $this->gradeDeTamanhos($daFamilia->all()),
+            ];
+        }
+
+        $orfas = $categorias->reject(fn ($categoria) => in_array($categoria, $mapeadas, true))->values();
+
+        if ($orfas->isNotEmpty()) {
+            $arvore[] = [
+                'familia' => 'Outros',
+                'categorias' => $orfas->all(),
+                'folhas' => $orfas->all(),
+                'grade' => $this->gradeDeTamanhos($orfas->all()),
+            ];
+        }
+
+        return $arvore;
+    }
+
+    /** Tamanhos com estoque nas categorias dadas, na ordem de vestuario. */
+    private function gradeDeTamanhos(array $categorias): array
+    {
+        $ordem = ['PP', 'P', 'M', 'G', 'GG', 'Único'];
+
+        $tamanhos = ProductVariant::query()
+            ->whereNotNull('tamanho')
+            ->where('estoque', '>', 0)
+            ->whereHas('product', fn ($query) => $query->whereIn('categoria', $categorias))
+            ->distinct()
+            ->pluck('tamanho')
+            ->all();
+
+        usort($tamanhos, function ($a, $b) use ($ordem) {
+            $posicaoA = array_search($a, $ordem, true);
+            $posicaoB = array_search($b, $ordem, true);
+
+            // numero de calcado nao esta na ordem fixa: cai no natural (34 < 35)
+            if ($posicaoA === false && $posicaoB === false) {
+                return strnatcasecmp($a, $b);
+            }
+
+            if ($posicaoA === false) {
+                return 1;
+            }
+
+            if ($posicaoB === false) {
+                return -1;
+            }
+
+            return $posicaoA <=> $posicaoB;
+        });
+
+        return $tamanhos;
     }
 
     public function busca(string $termo, ?int $userId = null): Collection
