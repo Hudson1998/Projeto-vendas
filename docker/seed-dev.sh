@@ -12,6 +12,20 @@ set -e
 
 cd /var/www/html
 
+# o postCreateCommand dispara assim que o container sobe, mas o entrypoint ainda
+# pode estar rodando o composer install + migrate (leva minutos no primeiro
+# boot). Sem esperar, os seeders quebram com "table not found".
+echo ">> aguardando o entrypoint terminar composer install + migrate"
+tentativas=0
+until php artisan migrate:status > /dev/null 2>&1; do
+    tentativas=$((tentativas + 1))
+    if [ "$tentativas" -gt 120 ]; then
+        echo "!! banco nao ficou pronto em 6 minutos; veja os logs do container app"
+        exit 1
+    fi
+    sleep 3
+done
+
 echo ">> produtos base + admin"
 php artisan db:seed --force
 
