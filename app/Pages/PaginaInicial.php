@@ -9,6 +9,7 @@ use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\PageVisit;
 use App\Models\Product;
+use App\Models\ProductClass;
 use App\Models\ProductVariant;
 use App\Models\SearchLog;
 use App\Models\User;
@@ -53,6 +54,7 @@ class PaginaInicial implements PagInicial
     public function vitrine(): Collection
     {
         $produtos = Product::query()
+            ->with('subclass')
             ->withSum(['orderItems as quantidade_vendida' => function ($query) {
                 $query->whereHas('order', fn ($q) => $q->where('status', 'concluido'));
             }], 'quantidade')
@@ -88,72 +90,76 @@ class PaginaInicial implements PagInicial
     }
 
     /**
-     * Estrutura do filtro da home: familia => categorias e grade de tamanhos.
+     * Estrutura do filtro da home: familia => folhas (subclasses) e grade de
+     * tamanhos.
      *
-     * O esqueleto vem da arvore de classes de app/Classes (Produto -> Roupa,
-     * Calcado, Acessorio), mas so entram categorias que existem de fato em
-     * products.categoria. O dropdown antigo era uma lista fixa e por isso
-     * escondia Blusas e Casacos enquanto oferecia Chapeus e Perfumes, que nao
-     * tem nenhum produto. Lendo do banco, o filtro nunca oferece caminho vazio
-     * e passa a mostrar as folhas sozinho quando o catalogo for subdividido.
+     * A arvore vem das tabelas product_classes/product_subclasses (que
+     * espelham app/Classes: Roupa, Calcado, Acessorio e seus subtipos), com
+     * uma folha por subclasse que tem pelo menos um produto de fato. Produto
+     * ainda sem classe/subclasse (product_subclass_id nulo) cai num bloco
+     * "Outros" agrupado pela `categoria` livre, para nao desaparecer do
+     * catalogo enquanto nao for reclassificado.
+     *
+     * O identificador de cada folha (o valor usado para filtrar no front) e
+     * o nome da subclasse — ou a propria categoria, para os orfaos — e viaja
+     * no JSON de cada produto como `subclasse` (ver $mapParaJs em
+     * layouts/app.blade.php) para o app.js casar filtro e produto pela mesma
+     * chave.
      */
     public function arvoreDeFiltros(): array
     {
-        $taxonomia = [
-            'Roupas' => ['Blusas', 'Calças', 'Camisas', 'Casacos', 'Saias', 'Vestidos', 'Roupa Íntima', 'Meias'],
-            'Calçados' => ['Botas', 'Chinelos', 'Pantufas', 'Saltos', 'Sandálias', 'Tênis'],
-            'Acessórios' => ['Anéis', 'Bonés', 'Braceletes', 'Brincos', 'Chapéus', 'Cordões', 'Óculos', 'Perfumes', 'Pulseiras', 'Relógios'],
-        ];
-
-        $categorias = Product::query()->distinct()->pluck('categoria')->filter()->values();
+        $classes = ProductClass::with(['subclasses' => function ($query) {
+            $query->withCount('products')->orderBy('nome');
+        }])->orderBy('nome')->get();
 
         $arvore = [];
-        $mapeadas = [];
 
-        foreach ($taxonomia as $familia => $folhas) {
-            // a familia responde pelas folhas e tambem pelo proprio nome: hoje o
-            // banco grava "Calçados" e "Acessórios" sem subdividir em folhas
-            $daFamilia = $categorias
-                ->filter(fn ($categoria) => $categoria === $familia || in_array($categoria, $folhas, true))
+        foreach ($classes as $classe) {
+            $folhas = $classe->subclasses
+                ->filter(fn ($subclasse) => $subclasse->products_count > 0)
                 ->values();
 
-            if ($daFamilia->isEmpty()) {
+            if ($folhas->isEmpty()) {
                 continue;
             }
 
-            $mapeadas = array_merge($mapeadas, $daFamilia->all());
+            $nomes = $folhas->pluck('nome')->all();
 
             $arvore[] = [
-                'familia' => $familia,
-                'categorias' => $daFamilia->all(),
-                'folhas' => $daFamilia->reject(fn ($categoria) => $categoria === $familia)->values()->all(),
-                'grade' => $this->gradeDeTamanhos($daFamilia->all()),
+                'familia' => $classe->nome,
+                'categorias' => $nomes,
+                'folhas' => $nomes,
+                'grade' => $this->gradeDeTamanhos(
+                    fn ($query) => $query->whereIn('product_subclass_id', $folhas->pluck('id')->all())
+                ),
             ];
         }
 
-        $orfas = $categorias->reject(fn ($categoria) => in_array($categoria, $mapeadas, true))->values();
+        $orfas = Product::query()->whereNull('product_subclass_id')->distinct()->pluck('categoria')->filter()->values();
 
         if ($orfas->isNotEmpty()) {
             $arvore[] = [
                 'familia' => 'Outros',
                 'categorias' => $orfas->all(),
                 'folhas' => $orfas->all(),
-                'grade' => $this->gradeDeTamanhos($orfas->all()),
+                'grade' => $this->gradeDeTamanhos(
+                    fn ($query) => $query->whereNull('product_subclass_id')->whereIn('categoria', $orfas->all())
+                ),
             ];
         }
 
         return $arvore;
     }
 
-    /** Tamanhos com estoque nas categorias dadas, na ordem de vestuario. */
-    private function gradeDeTamanhos(array $categorias): array
+    /** Tamanhos com estoque nos produtos que passam pelo filtro dado. */
+    private function gradeDeTamanhos(\Closure $filtroDeProdutos): array
     {
         $ordem = ['PP', 'P', 'M', 'G', 'GG', 'Único'];
 
         $tamanhos = ProductVariant::query()
             ->whereNotNull('tamanho')
             ->where('estoque', '>', 0)
-            ->whereHas('product', fn ($query) => $query->whereIn('categoria', $categorias))
+            ->whereHas('product', $filtroDeProdutos)
             ->distinct()
             ->pluck('tamanho')
             ->all();
@@ -263,6 +269,7 @@ class PaginaInicial implements PagInicial
     public function carrosselMaisComprados(int $limite = 10): Collection
     {
         return Product::query()
+            ->with('subclass')
             ->withSum(['orderItems as quantidade_vendida' => function ($query) {
                 $query->whereHas('order', fn ($q) => $q->where('status', 'concluido'));
             }], 'quantidade')
@@ -291,7 +298,7 @@ class PaginaInicial implements PagInicial
             return new Collection;
         }
 
-        $produtos = Product::whereIn('id', $idsOrdenados)->get()->keyBy('id');
+        $produtos = Product::whereIn('id', $idsOrdenados)->with('subclass')->get()->keyBy('id');
 
         return new Collection(
             $idsOrdenados->map(fn ($id) => $produtos->get($id))->filter()->values()->all()
@@ -301,6 +308,7 @@ class PaginaInicial implements PagInicial
     public function carrosselPromocoes(int $limite = 10): Collection
     {
         return Product::query()
+            ->with('subclass')
             ->whereNotNull('preco_promocional')
             ->whereColumn('preco_promocional', '<', 'preco')
             ->orderBy('nome')

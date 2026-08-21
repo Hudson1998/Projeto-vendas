@@ -12,7 +12,7 @@ class FavoriteController extends Controller
 {
     public function index(Request $request): View
     {
-        $produtos = Favorite::with('product')
+        $produtos = Favorite::with('product.subclass')
             ->where('user_id', $request->user()->id)
             ->latest()
             ->get()

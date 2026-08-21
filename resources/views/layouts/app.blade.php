@@ -229,6 +229,9 @@
         'preco' => 'R$ '.number_format($p->preco, 2, ',', '.'),
         'precoPromocional' => $p->preco_promocional ? 'R$ '.number_format($p->preco_promocional, 2, ',', '.') : null,
         'categoria' => $p->categoria,
+        // chave usada pelo filtro da vitrine: nome da subclasse (Bolsa, Vestido...)
+        // quando o produto ja foi classificado, senao cai na categoria livre
+        'subclasse' => $p->subclass->nome ?? $p->categoria,
         'url' => asset($p->imagem),
         'favoritado' => $favoritosIds->contains($p->id),
         // usados pelos filtros da vitrine; os carrosseis nao carregam esses

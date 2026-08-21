@@ -161,8 +161,9 @@
   /* Filtros da vitrine.
 
      A arvore vem de window.FILTRO_ARVORE, montada em PaginaInicial::arvoreDeFiltros
-     a partir das categorias que existem de fato em products.categoria -- por isso
-     o painel nunca oferece um caminho que cai em colecao vazia. */
+     a partir das subclasses (product_subclasses) que tem pelo menos um produto de
+     fato -- por isso o painel nunca oferece um caminho que cai em colecao vazia.
+     Cada folha casa com o campo `subclasse` do produto (ver p.subclasse abaixo). */
   const FAIXAS_PRECO = [
     { id: 'ate-100', rotulo: 'Até R$ 100', min: 0, max: 100 },
     { id: '100-300', rotulo: 'R$ 100 a 300', min: 100, max: 300 },
@@ -357,13 +358,15 @@
     const faixa = FAIXAS_PRECO.find((f) => f.id === gridState.faixa);
 
     const filtrados = PRODUTOS.filter((p) => {
-      if (categorias && categorias.indexOf(p.categoria) === -1) return false;
+      // chave da folha e p.subclasse (subclasse cadastrada) com fallback pra
+      // categoria livre nos produtos ainda nao classificados
+      if (categorias && categorias.indexOf(p.subclasse || p.categoria) === -1) return false;
       if (faixa && !(p.precoNumerico >= faixa.min && p.precoNumerico < faixa.max)) return false;
       if (gridState.tamanhos.length) {
         const tamanhos = p.tamanhos || [];
         if (!gridState.tamanhos.some((t) => tamanhos.indexOf(t) !== -1)) return false;
       }
-      if (q && !p.nome.toLowerCase().includes(q) && !p.categoria.toLowerCase().includes(q)) return false;
+      if (q && !p.nome.toLowerCase().includes(q) && !p.categoria.toLowerCase().includes(q) && !(p.subclasse || '').toLowerCase().includes(q)) return false;
       return true;
     });
 
