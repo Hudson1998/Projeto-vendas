@@ -13,8 +13,17 @@
   "portsAttributes": {
     "80": {
       "label": "Loja",
-      "onAutoForward": "openPreview"
+      // "openPreview" abre o navegador embutido do VS Code, que engasga no
+      // handshake de autenticacao das portas privadas e mostra "a porta nao
+      // esta funcionando". Abrir numa aba real do navegador funciona.
+      "onAutoForward": "openBrowser"
     }
+  },
+
+  // a imagem php:8.2-apache nao tem sshd, e sem ele "gh codespace ssh/logs"
+  // nao consegue entrar no container para depurar de fora do navegador.
+  "features": {
+    "ghcr.io/devcontainers/features/sshd:1": {}
   },
 
   // roda uma unica vez, quando o codespace e criado: o volume do MySQL nasce
