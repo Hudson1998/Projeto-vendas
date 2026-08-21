@@ -94,8 +94,20 @@
     // travava o modal do /cadastro ate dar F5.
     var newScripts = doc.getElementById('ajax-scripts');
     var currentScripts = document.getElementById('ajax-scripts');
-    if (newScripts && currentScripts) {
-      currentScripts.innerHTML = newScripts.innerHTML;
+
+    // o bloco so existe no layout da pagina que esta na tela agora. Saindo de
+    // um layout sem ele (app/admin/loja) nao havia onde injetar, e o script da
+    // pagina nova era descartado em silencio -- era isso que deixava os botoes
+    // do /cadastro mortos ate dar F5. Cria o container sob demanda.
+    if (newScripts && !currentScripts) {
+      currentScripts = document.createElement('div');
+      currentScripts.id = 'ajax-scripts';
+      document.body.appendChild(currentScripts);
+    }
+
+    // sem bloco novo, esvazia: senao o script da pagina anterior fica no DOM
+    if (currentScripts) {
+      currentScripts.innerHTML = newScripts ? newScripts.innerHTML : '';
       runScripts(currentScripts);
     }
 

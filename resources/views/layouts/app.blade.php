@@ -252,5 +252,9 @@
 <script src="{{ asset_v('js/flash.js') }}"></script>
 <script src="{{ asset_v('js/cep.js') }}"></script>
 <script src="{{ asset_v('js/lojista-cadastro.js') }}"></script>
+{{-- fica fora do #ajax-content de proposito, para carregar depois dos JS
+     globais, mas precisa de id proprio: o ajax-nav troca este bloco a cada
+     navegacao, senao o script da pagina nunca roda sem um reload completo. --}}
+<div id="ajax-scripts">@stack('scripts')</div>
 </body>
 </html>
