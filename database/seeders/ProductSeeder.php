@@ -22,8 +22,11 @@ class ProductSeeder extends Seeder
             ['nome' => 'Cinto Fivela Dourada', 'preco' => 89.90, 'categoria' => 'Acessórios', 'imagem' => 'assets/p10.jpg'],
         ];
 
+        // updateOrCreate em vez de create: os demais seeders limpam a propria
+        // massa antes de inserir, entao so este impedia reexecutar o
+        // docker/seed-dev.sh (duplicava os 10 produtos base a cada rodada).
         foreach ($produtos as $produto) {
-            Product::create($produto);
+            Product::updateOrCreate(['nome' => $produto['nome']], $produto);
         }
     }
 }
