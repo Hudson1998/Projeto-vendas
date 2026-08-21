@@ -25,3 +25,6 @@ auth.json
 .DS_Store
 Thumbs.db
 /admin-credenciais.txt
+
+# arquivos de trabalho do canvas de design (o entregavel e o artifact publicado)
+/.design-filtro
