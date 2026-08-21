@@ -17,6 +17,10 @@
     }
   },
 
+  // roda uma unica vez, quando o codespace e criado: o volume do MySQL nasce
+  // vazio e sem isso a loja abriria sem nenhum produto.
+  "postCreateCommand": "sh docker/seed-dev.sh",
+
   "customizations": {
     "vscode": {
       "extensions": [
