@@ -37,4 +37,13 @@ php artisan view:clear
 
 chown -R www-data:www-data storage bootstrap/cache public/uploads 2>/dev/null || true
 
+# A feature sshd do devcontainer instala o servidor, mas quem o inicia e o
+# entrypoint que ela registra -- e o "entrypoint" do compose substitui esse.
+# Sem isto o sshd nunca sobe e "gh codespace ssh" trava no banner exchange
+# ("kex_exchange_identification"), deixando o container so acessivel pelo VS Code.
+if [ -x /usr/sbin/sshd ]; then
+    mkdir -p /var/run/sshd
+    /usr/sbin/sshd || echo "aviso: sshd nao subiu"
+fi
+
 exec "$@"
