@@ -87,6 +87,18 @@
     document.title = doc.title || document.title;
     current.innerHTML = newContent.innerHTML;
     runScripts(current);
+
+    // os scripts de @push('scripts') vivem fora do #ajax-content (precisam
+    // carregar depois dos JS globais). Sem trocar este bloco tambem, a pagina
+    // nova herda o script da anterior e o dela nunca executa -- foi o que
+    // travava o modal do /cadastro ate dar F5.
+    var newScripts = doc.getElementById('ajax-scripts');
+    var currentScripts = document.getElementById('ajax-scripts');
+    if (newScripts && currentScripts) {
+      currentScripts.innerHTML = newScripts.innerHTML;
+      runScripts(currentScripts);
+    }
+
     afterContentReady();
     return true;
   }

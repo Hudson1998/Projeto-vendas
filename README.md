@@ -105,7 +105,7 @@ O código-fonte é montado como volume (`.:/var/www/html`), então alterações 
    cp .env.example .env
    php artisan key:generate
    ```
-3. Crie o banco `hr_moda_feminina` no MySQL e configure `DB_DATABASE`, `DB_USERNAME` e `DB_PASSWORD` no `.env`.
+3. Crie o banco `hr_moda_online` no MySQL e configure `DB_DATABASE`, `DB_USERNAME` e `DB_PASSWORD` no `.env`.
 4. Rode as migrations (e, opcionalmente, os seeders):
    ```bash
    php artisan migrate --seed
