@@ -174,6 +174,8 @@ class CartController extends Controller
             $pagamento->enviarDocParaAnalise($order->fresh());
         }
 
-        return redirect()->route('orders.index')->with('status', 'Pedido #'.$order->id.' realizado com sucesso!');
+        // o pedido nasce em andamento, entao o lugar util logo apos a compra e o
+        // acompanhamento, com a linha do tempo -- nao o historico de concluidos.
+        return redirect()->route('orders.tracking')->with('status', 'Pedido #'.$order->id.' realizado com sucesso!');
     }
 }

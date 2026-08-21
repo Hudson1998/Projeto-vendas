@@ -136,6 +136,7 @@
         <span class="mobile-menu__profile-name">{{ auth()->user()->name }}</span>
         <span class="mobile-menu__profile-email">{{ auth()->user()->email }}</span>
       </div>
+      <a href="{{ route('home') }}" class="mobile-menu__item">Início</a>
       @if (auth()->user()->isAdmin())
         <a href="{{ route('admin.dashboard') }}" class="mobile-menu__item">Painel Admin</a>
       @endif
@@ -162,6 +163,7 @@
         <button type="submit" class="mobile-menu__item mobile-menu__item--exit">Sair</button>
       </form>
     @else
+      <a href="{{ route('home') }}" class="mobile-menu__item">Início</a>
       <a href="{{ route('login') }}" class="mobile-menu__item">Entrar</a>
       <a href="{{ route('register') }}" class="mobile-menu__item">Cadastrar</a>
     @endauth
