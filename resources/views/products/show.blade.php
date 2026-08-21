@@ -89,7 +89,7 @@
             <input type="number" id="quantidade" name="quantidade" min="1" max="{{ min(20, $estoqueTotal) }}" value="1">
           </div>
 
-          <button type="submit" class="btn btn-primary btn-block" id="add-to-cart-btn">Adicionar ao carrinho</button>
+          <button type="submit" class="btn btn-cart btn-block" id="add-to-cart-btn">Adicionar ao carrinho</button>
         </form>
       @endif
 
@@ -225,6 +225,9 @@
       .catch(() => mostrarToast('Não foi possível adicionar ao carrinho.', 'erro'))
       .finally(() => {
         botao.disabled = false;
+        // devolve o botão ao estado que a combinação escolhida permite, em vez
+        // de reabilitar sempre -- senão um combo esgotado voltava clicável
+        atualizarDisponibilidade();
       });
   });
 })();

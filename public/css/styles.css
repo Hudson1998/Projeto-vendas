@@ -557,6 +557,25 @@ img {
   color: var(--bg);
   font-weight: 400;
 }
+/* Adicionar ao carrinho */
+.btn-cart {
+  background: #8fc79a;
+  color: #101012;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background 0.25s ease;
+}
+.btn-cart:hover:not(:disabled) {
+  background: #a5d6ae;
+}
+/* Sem isto um botão desabilitado fica idêntico a um ativo -- o "adicionar ao
+   carrinho" nasce desabilitado quando a combinação padrão está esgotada, e
+   parecia clicável mesmo sem fazer nada. */
+.btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
 .btn-outline {
   background: transparent;
   border: 1px solid var(--line);
