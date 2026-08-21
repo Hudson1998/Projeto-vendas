@@ -19,8 +19,8 @@ class ProductTaxonomySeeder extends Seeder
     /** classe => subclasses */
     private const TAXONOMIA = [
         'Roupa' => ['Blusa', 'Calça', 'Camisa', 'Casaco', 'Íntimo', 'Meia', 'Saia', 'Vestido'],
-        'Calçado' => ['Bota', 'Chinelo', 'Pantufa', 'Salto', 'Sandália', 'Tênis'],
-        'Acessório' => ['Anel', 'Bolsa', 'Boné', 'Bracelete', 'Brinco', 'Chapéu', 'Cinto', 'Cordão', 'Óculos', 'Perfume', 'Pulseira', 'Relógio'],
+        'Calçado' => ['Bota', 'Chinelo', 'Mocassim', 'Mule', 'Pantufa', 'Salto', 'Sandália', 'Tênis'],
+        'Acessório' => ['Anel', 'Bolsa', 'Boné', 'Bracelete', 'Brinco', 'Chapéu', 'Cinto', 'Cordão', 'Lenço', 'Óculos', 'Perfume', 'Pulseira', 'Relógio'],
     ];
 
     /** categoria (products.categoria) => slug da subclasse, para produtos ja cadastrados */
@@ -31,6 +31,20 @@ class ProductTaxonomySeeder extends Seeder
         'Calças' => 'calca',
         'Blusas' => 'blusa',
         'Casacos' => 'casaco',
+    ];
+
+    /**
+     * Nome comercial => subclasse, para peças que o catalogo anuncia por um
+     * nome que nao e o da subclasse. Categorias "achatadas" (Calçados,
+     * Acessórios) nao dizem o subtipo, entao a classificacao sai do nome do
+     * produto — e "Scarpin"/"Ankle Boot"/"Colar" nunca casariam sozinhos com
+     * "Salto"/"Bota"/"Cordão".
+     */
+    private const SINONIMOS = [
+        'scarpin' => 'salto',
+        'ankle boot' => 'bota',
+        'rasteira' => 'sandalia',
+        'colar' => 'cordao',
     ];
 
     public function run(): void
@@ -66,12 +80,20 @@ class ProductTaxonomySeeder extends Seeder
      * Para categorias "achatadas" (ex.: "Calçados", "Acessórios", que nao
      * dizem o subtipo), tenta casar pelo nome da subclasse dentro do nome
      * do produto — ex.: "Bolsa Estruturada" -> bolsa, "Tênis Branco" -> tenis.
+     * Antes disso consulta os sinonimos, que sao afirmacoes explicitas e por
+     * isso valem mais que a coincidencia de substring.
      *
      * @param  array<string, ProductSubclass>  $subclassesPorSlug
      */
     private function porNomeDoProduto(string $nomeProduto, array $subclassesPorSlug): ?string
     {
         $nomeNormalizado = Str::slug($nomeProduto, ' ');
+
+        foreach (self::SINONIMOS as $sinonimo => $slug) {
+            if (Str::contains($nomeNormalizado, $sinonimo)) {
+                return $slug;
+            }
+        }
 
         foreach ($subclassesPorSlug as $slug => $subclasse) {
             $subclasseNormalizada = Str::slug($subclasse->nome, ' ');
