@@ -1,6 +1,6 @@
 # 👗 HR Moda Online — Catálogo em Laravel
 
-Catálogo de produtos de moda feminina, migrado do site estático original (HTML/CSS/JS) para uma aplicação Laravel com os produtos armazenados em banco de dados.
+Catálogo de produtos de moda online, migrado do site estático original (HTML/CSS/JS) para uma aplicação Laravel com os produtos armazenados em banco de dados.
 
 ## 📋 Sobre o Projeto
 

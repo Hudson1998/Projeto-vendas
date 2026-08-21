@@ -40,8 +40,8 @@ return [
     ],
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'contato@hrmodafeminina.com.br'),
-        'name' => env('MAIL_FROM_NAME', 'HR Moda Feminina'),
+        'address' => env('MAIL_FROM_ADDRESS', 'contato@hrmodaonline.com.br'),
+        'name' => env('MAIL_FROM_NAME', 'HR Moda Online'),
     ],
 
 ];

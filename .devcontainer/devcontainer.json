@@ -1,5 +1,5 @@
 {
-  "name": "HR Moda Feminina (Laravel + MySQL)",
+  "name": "HR Moda Online (Laravel + MySQL)",
 
   // reaproveita o mesmo compose usado localmente: um so lugar para manter
   "dockerComposeFile": "../docker-compose.yml",

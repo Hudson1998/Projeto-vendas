@@ -95,8 +95,8 @@
 
       <div class="product-detail__store">
         <span class="product-detail__store-label">Vendido por</span>
-        <strong>HR Moda Feminina</strong>
-        <p>Loja própria de moda feminina online, com curadoria e envio para todo o Brasil.</p>
+        <strong>HR Moda Online</strong>
+        <p>Loja própria de moda online, com curadoria e envio para todo o Brasil.</p>
       </div>
     </div>
   </div>

@@ -1,7 +1,7 @@
 {
-    "name": "hr/moda-feminina",
+    "name": "hr/moda-online",
     "type": "project",
-    "description": "HR Moda Feminina - catalogo de produtos em Laravel.",
+    "description": "HR Moda Online - catalogo de produtos em Laravel.",
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {

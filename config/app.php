@@ -2,7 +2,7 @@
 
 return [
 
-    'name' => env('APP_NAME', 'HR Moda Feminina'),
+    'name' => env('APP_NAME', 'HR Moda Online'),
 
     'env' => env('APP_ENV', 'production'),
 

@@ -198,7 +198,7 @@
         <svg width="34" height="34" viewBox="0 0 24 24" fill="#a8a8ae"><path d="M16.5 3h-2.8v12.2a2.6 2.6 0 1 1-2.6-2.6c.2 0 .5 0 .7.1V9.8a5.5 5.5 0 1 0 4.7 5.4V9.3a6.6 6.6 0 0 0 3.7 1.1V7.6A3.9 3.9 0 0 1 16.5 3z"></path></svg>
       </a>
     </div>
-    <span class="footer__copy">© {{ date('Y') }} HR Moda Feminina</span>
+    <span class="footer__copy">© {{ date('Y') }} HR Moda Online</span>
   </div>
 </footer>
 
