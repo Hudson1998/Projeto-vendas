@@ -1,6 +1,18 @@
 (function () {
   const STATS_URL = window.ADMIN_STATS_URL;
-  const POLL_INTERVAL_MS = 1000;
+
+  // 1s empilhava requisicao: o servidor de desenvolvimento atende uma por vez,
+  // e o setInterval nao esperava a anterior terminar. Com a aba aberta um tempo
+  // a fila so crescia e o painel inteiro travava. 5s da folga de sobra para um
+  // painel que mostra contadores.
+  const POLL_INTERVAL_MS = 5000;
+
+  // Teto do recuo progressivo quando o servidor falha ou demora.
+  const POLL_INTERVAL_MAX_MS = 60000;
+
+  // Requisicao que passa disso e considerada perdida e e abortada, senao ela
+  // seguraria a fila do servidor sozinha.
+  const REQUEST_TIMEOUT_MS = 15000;
 
   const statKeys = [
     'totalVisitas',
@@ -73,14 +85,15 @@
   }
 
   async function pollStats() {
-    if (!document.getElementById('stat-totalVisitas')) {
-      stopPolling();
-      return;
-    }
+    const controller = new AbortController();
+    const expirar = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
     try {
-      const response = await fetch(STATS_URL, { headers: { Accept: 'application/json' } });
-      if (!response.ok) return;
+      const response = await fetch(STATS_URL, {
+        headers: { Accept: 'application/json' },
+        signal: controller.signal,
+      });
+      if (!response.ok) return false;
 
       const data = await response.json();
 
@@ -114,19 +127,79 @@
         data.produtosMaisVendidos.map((p) => ({ label: p.nome, count: p.total_vendido })),
         'Nenhuma venda registrada ainda.'
       );
+
+      return true;
     } catch (e) {
       // silencia falhas pontuais de rede e tenta novamente no próximo tick
+      return false;
+    } finally {
+      clearTimeout(expirar);
     }
   }
 
-  function stopPolling() {
-    if (window.__adminStatsInterval) {
-      clearInterval(window.__adminStatsInterval);
-      window.__adminStatsInterval = null;
-    }
+  /* Ciclo de atualizacao.
+
+     Em vez de setInterval, cada rodada agenda a proxima so depois de terminar.
+     Assim nunca existe mais de uma requisicao em voo: se o servidor demorar, o
+     ciclo espera, em vez de abrir outra por cima e formar fila. */
+  let timer = null;
+  let intervaloAtual = POLL_INTERVAL_MS;
+  let rodando = false;
+
+  function agendar(atraso) {
+    clearTimeout(timer);
+    timer = setTimeout(ciclo, atraso);
   }
 
-  stopPolling();
-  pollStats();
-  window.__adminStatsInterval = setInterval(pollStats, POLL_INTERVAL_MS);
+  async function ciclo() {
+    // a tabela sumiu do DOM (navegou para outra pagina do painel): encerra
+    if (!document.getElementById('stat-totalVisitas')) {
+      parar();
+      return;
+    }
+
+    // aba em segundo plano nao precisa de dado fresco; volta a atualizar no
+    // visibilitychange, que ja dispara uma rodada imediata
+    if (document.hidden) {
+      agendar(POLL_INTERVAL_MS);
+      return;
+    }
+
+    if (rodando) {
+      agendar(intervaloAtual);
+      return;
+    }
+
+    rodando = true;
+    const ok = await pollStats();
+    rodando = false;
+
+    // servidor falhando: espaca as tentativas ate o teto em vez de insistir no
+    // mesmo ritmo, que so piora a fila de quem ja esta sobrecarregado
+    intervaloAtual = ok
+      ? POLL_INTERVAL_MS
+      : Math.min(intervaloAtual * 2, POLL_INTERVAL_MAX_MS);
+
+    agendar(intervaloAtual);
+  }
+
+  function parar() {
+    clearTimeout(timer);
+    timer = null;
+    document.removeEventListener('visibilitychange', aoMudarVisibilidade);
+    window.__adminStatsPolling = false;
+  }
+
+  function aoMudarVisibilidade() {
+    if (document.hidden) return;
+    // voltou para a aba: mostra dado atual sem esperar o proximo tick
+    intervaloAtual = POLL_INTERVAL_MS;
+    agendar(0);
+  }
+
+  if (!window.__adminStatsPolling) {
+    window.__adminStatsPolling = true;
+    document.addEventListener('visibilitychange', aoMudarVisibilidade);
+    ciclo();
+  }
 })();
