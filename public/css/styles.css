@@ -1055,6 +1055,60 @@ img {
   letter-spacing: 0.06em;
   color: var(--muted);
 }
+/* tamanho usado nos formularios de perfil, onde a imagem e o assunto da tela */
+.store-logo--lg {
+  width: 84px;
+  height: 84px;
+  flex: 0 0 84px;
+  font-size: 28px;
+  font-weight: 300;
+}
+
+/* Campo de foto/logotipo das telas de perfil */
+.avatar-field {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.avatar-field__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.avatar-field__input {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--muted);
+  max-width: 100%;
+}
+.avatar-field__input::file-selector-button {
+  margin-right: 12px;
+  padding: 8px 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  cursor: pointer;
+}
+.avatar-field__input::file-selector-button:hover {
+  border-color: var(--line);
+}
+.avatar-field__hint {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--muted-dim);
+}
+.avatar-field__remove {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--muted);
+}
 
 /* Cabecalho da vitrine da loja */
 .store-header {

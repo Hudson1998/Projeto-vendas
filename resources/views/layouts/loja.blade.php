@@ -45,6 +45,10 @@
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><path d="M3.27 6.96 12 12l8.73-5.04M12 22V12"></path></svg>
         Produtos
       </a>
+      <a href="{{ route('loja.perfil') }}" class="admin-sidenav__link @if(request()->routeIs('loja.perfil*')) is-active @endif">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 21v-2a5 5 0 0 1 5-5h8a5 5 0 0 1 5 5v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        Perfil da loja
+      </a>
     </nav>
 
     <div class="admin-sidenav__footer">

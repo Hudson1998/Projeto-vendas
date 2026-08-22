@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Pages\PaginaAnalise;
 use App\Pages\PaginaLojaDashboard;
 use App\Pages\PaginaTransportadora;
+use App\Support\ImagemDePerfil;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,41 @@ class LojaDashboardController extends Controller
     private function lojaAtual(Request $request): Loja
     {
         return $request->user()->loja ?? abort(404);
+    }
+
+    /**
+     * Perfil publico da loja: o que o comprador ve na vitrine (/lojas/{id})
+     * e no bloco "Vendido por" da pagina do produto.
+     */
+    public function perfil(Request $request): View
+    {
+        return view('loja.perfil', ['loja' => $this->lojaAtual($request)]);
+    }
+
+    public function atualizarPerfil(Request $request): RedirectResponse
+    {
+        $loja = $this->lojaAtual($request);
+
+        $data = $request->validate([
+            'nome_exibicao' => ['nullable', 'string', 'max:255'],
+            'bio_loja' => ['required', 'string', 'max:2000'],
+            'logotipo' => ImagemDePerfil::regras(),
+            'remover_logotipo' => ['nullable', 'boolean'],
+        ]);
+
+        // o campo do banco guarda o caminho, nao o arquivo enviado
+        unset($data['logotipo'], $data['remover_logotipo']);
+
+        if ($request->hasFile('logotipo')) {
+            $data['logotipo'] = ImagemDePerfil::guardar($request->file('logotipo'), 'logo_', $loja->logotipo);
+        } elseif ($request->boolean('remover_logotipo')) {
+            ImagemDePerfil::apagar($loja->logotipo);
+            $data['logotipo'] = null;
+        }
+
+        $loja->update($data);
+
+        return back()->with('status', 'Perfil da loja atualizado com sucesso!');
     }
 
     public function dashboard(Request $request): View

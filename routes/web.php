@@ -83,6 +83,9 @@ Route::middleware(['auth', 'lojista'])->prefix('loja')->name('loja.')->group(fun
     Route::get('/', [LojaDashboardController::class, 'dashboard'])->name('dashboard');
     Route::get('/dados', [LojaDashboardController::class, 'dados'])->name('dados');
 
+    Route::get('/perfil', [LojaDashboardController::class, 'perfil'])->name('perfil');
+    Route::post('/perfil', [LojaDashboardController::class, 'atualizarPerfil'])->name('perfil.update');
+
     Route::get('/pedidos', [LojaDashboardController::class, 'pedidos'])->name('pedidos');
     Route::post('/pedidos/{order}/entrega', [LojaDashboardController::class, 'definirEntrega'])->name('pedidos.entrega');
     Route::post('/pedidos/{order}/separar', [LojaDashboardController::class, 'separar'])->name('pedidos.separar');

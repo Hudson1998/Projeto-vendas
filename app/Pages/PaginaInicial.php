@@ -258,6 +258,7 @@ class PaginaInicial implements PagInicial
             nome: $user->name,
             email: $user->email,
             endereco: $user->endereco,
+            foto: $user->foto,
         );
     }
 

@@ -21,8 +21,33 @@
       </div>
     @endif
 
-    <form method="POST" action="{{ route('profile.update') }}">
+    {{-- enctype e obrigatorio: sem ele o navegador manda so o nome do arquivo --}}
+    <form method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data">
       @csrf
+
+      <div class="field">
+        <label>Foto de perfil</label>
+        <div class="avatar-field">
+          @if ($user->foto)
+            <img class="store-logo store-logo--lg" id="avatar-preview" src="{{ asset($user->foto) }}" alt="Sua foto de perfil">
+          @else
+            <span class="store-logo store-logo--lg store-logo--initials" id="avatar-preview-initials" aria-hidden="true">{{ $user->iniciais() }}</span>
+            <img class="store-logo store-logo--lg" id="avatar-preview" src="" alt="Pré-visualização da foto" hidden>
+          @endif
+
+          <div class="avatar-field__actions">
+            <input type="file" id="foto" name="foto" accept="image/jpeg,image/png,image/webp" class="avatar-field__input">
+            <span class="avatar-field__hint">JPG, PNG ou WEBP, até 5 MB.</span>
+
+            @if ($user->foto)
+              <label class="checkbox avatar-field__remove">
+                <input type="checkbox" name="remover_foto" value="1">
+                Remover foto atual
+              </label>
+            @endif
+          </div>
+        </div>
+      </div>
 
       <div class="field">
         <label for="name">Nome</label>
@@ -41,3 +66,9 @@
   </div>
 </section>
 @endsection
+
+{{-- em @push('scripts') porque o ajax-nav reexecuta essa pilha a cada troca de
+     pagina; um <script> solto no content so rodaria no carregamento inicial --}}
+@push('scripts')
+  <script src="{{ asset_v('js/avatar-preview.js') }}"></script>
+@endpush
