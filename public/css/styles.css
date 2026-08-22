@@ -837,6 +837,12 @@ img {
 .carousel-section {
   padding: 40px 0 0;
 }
+/* o app.js esconde as secoes de destaque durante uma busca. A regra e explicita
+   porque qualquer "display" que venha a ser adicionado em .carousel-section
+   venceria o display:none que o navegador da ao atributo hidden. */
+.carousel-section[hidden] {
+  display: none;
+}
 .carousel {
   position: relative;
   display: flex;

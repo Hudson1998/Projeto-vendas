@@ -82,7 +82,6 @@
 
   /* Vitrine de produtos (home) — estado reinicia a cada carregamento da página */
   let gridState = null;
-  let buscaTimeout = null;
   const PRODUTOS_POR_PAGINA = 40;
 
   function cartaoProduto(item) {
@@ -385,6 +384,14 @@
     productGrid.innerHTML =
       itensPagina.map(cartaoProduto).join('') + cartaoVazio().repeat(quantidadeVazios);
 
+    // durante uma busca a vitrine vira lista de resultados: os carrosseis de
+    // destaque (mais comprados, mais visitados, promocoes) empurrariam os itens
+    // procurados para baixo da dobra. Some com todos de uma vez pela classe, em
+    // vez de citar os ids um a um, para que um carrossel novo ja nasca coberto.
+    document.querySelectorAll('.carousel-section').forEach((secao) => {
+      secao.hidden = q !== '';
+    });
+
     const emptyState = document.getElementById('empty-state');
     const collectionTitle = document.getElementById('collection-title');
     if (emptyState) emptyState.classList.toggle('is-visible', filtrados.length === 0 && !catalogoVazio);
@@ -394,6 +401,26 @@
     if (collectionSummary) collectionSummary.textContent = resumoDosFiltros(filtrados.length);
 
     renderPaginacao(totalPaginas);
+  }
+
+  /* A busca so acontece quando o usuario confirma -- Enter ou clique na lupa.
+     Digitar nao filtra nada: antes cada tecla refazia a grade inteira e o
+     resultado ficava piscando embaixo de quem ainda estava escrevendo. */
+  function executarBusca() {
+    const input = document.getElementById('search-input');
+    if (!input || !gridState) return;
+
+    gridState.busca = input.value;
+    gridState.pagina = 1;
+    renderProductGrid();
+
+    const termo = input.value.trim();
+    if (!termo) return;
+
+    registrarBusca(termo);
+    // leva aos resultados sem mexer no hash, que empilharia historico a cada busca
+    const colecao = document.getElementById('colecao');
+    if (colecao) colecao.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function registrarBusca(termo) {
@@ -606,8 +633,13 @@
       const searchIconBtn = e.target.closest('#search-icon');
       if (searchIconBtn) {
         const input = document.getElementById('search-input');
-        if (input) input.focus();
-        window.location.hash = '#colecao';
+        // com a caixa vazia a lupa nao tem o que buscar; serve so de atalho
+        // para escrever, que era o comportamento dela antes
+        if (input && !input.value.trim()) {
+          input.focus();
+          return;
+        }
+        executarBusca();
         return;
       }
 
@@ -618,6 +650,14 @@
     });
 
     document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && e.target.id === 'search-input') {
+        // o input nao esta dentro de um <form>, mas o preventDefault protege
+        // caso um dia passe a estar -- ai o Enter recarregaria a pagina
+        e.preventDefault();
+        executarBusca();
+        return;
+      }
+
       if (e.key !== 'Escape') return;
       fecharPainelFiltros();
       const pd = document.getElementById('profile-dropdown');
@@ -639,18 +679,6 @@
         const t4 = document.getElementById('mobile-menu-toggle');
         if (t4) t4.setAttribute('aria-expanded', 'false');
       }
-    });
-
-    document.addEventListener('input', (e) => {
-      if (e.target.id !== 'search-input' || !gridState) return;
-      gridState.busca = e.target.value;
-      gridState.pagina = 1;
-      renderProductGrid();
-
-      clearTimeout(buscaTimeout);
-      const termo = e.target.value.trim();
-      if (!termo) return;
-      buscaTimeout = setTimeout(() => registrarBusca(termo), 700);
     });
   }
 
