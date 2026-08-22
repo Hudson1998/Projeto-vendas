@@ -6,6 +6,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LojaDashboardController;
+use App\Http\Controllers\LojaVitrineController;
 use App\Http\Controllers\LojistaAuthController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
@@ -19,6 +20,10 @@ Route::get('/', [HomeController::class, 'index'])->middleware('log.visit')->name
 Route::post('/buscas', [SearchLogController::class, 'store'])->name('buscas.store');
 
 Route::get('/produtos/{product}', [ProductController::class, 'show'])->middleware('log.visit')->name('products.show');
+
+// vitrine publica da loja, alcancada pelo bloco da loja na pagina do produto.
+// O painel do lojista mora em /loja (singular), atras de auth+lojista.
+Route::get('/lojas/{loja}', [LojaVitrineController::class, 'show'])->middleware('log.visit')->name('lojas.show');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');

@@ -1017,6 +1017,103 @@ img {
 .product-detail__store p {
   margin: 6px 0 0;
 }
+.product-detail__store-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--fg);
+}
+.product-detail__store-identity:hover .product-detail__store-name {
+  color: var(--nav-hover);
+}
+.product-detail__store-name {
+  font-size: 15px;
+  font-weight: 400;
+}
+.product-detail__store-cta {
+  display: inline-block;
+  margin-top: 14px;
+}
+
+/* Logotipo da loja, compartilhado entre a pagina do produto e a vitrine dela.
+   O monograma cobre o logotipo ausente -- que hoje e o caso de todas. */
+.store-logo {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-alt);
+}
+.store-logo--initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+/* Cabecalho da vitrine da loja */
+.store-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 24px 0 28px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 28px;
+}
+.store-header__logo {
+  width: 76px;
+  height: 76px;
+  flex: 0 0 76px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-alt);
+}
+.store-header__logo--initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 300;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.store-header__info {
+  min-width: 0;
+}
+.store-header__name {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+}
+.store-header__count {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--muted-dim);
+}
+.store-header__bio {
+  margin: 12px 0 0;
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 1.7;
+  color: var(--muted);
+  max-width: 70ch;
+}
+@media (max-width: 640px) {
+  .store-header {
+    flex-direction: column;
+    gap: 14px;
+  }
+}
 .radio-group--inline {
   flex-direction: row;
   flex-wrap: wrap;

@@ -263,7 +263,8 @@ class PaginaInicial implements PagInicial
 
     public function linkProduto(int $productId): ?Product
     {
-        return Product::with(['variants', 'reviews'])->find($productId);
+        // 'loja' entra aqui porque a pagina do produto mostra quem vende a peca
+        return Product::with(['variants', 'reviews', 'loja'])->find($productId);
     }
 
     public function carrosselMaisComprados(int $limite = 10): Collection

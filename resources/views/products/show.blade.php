@@ -93,11 +93,32 @@
         </form>
       @endif
 
-      <div class="product-detail__store">
-        <span class="product-detail__store-label">Vendido por</span>
-        <strong>HR Moda Online</strong>
-        <p>Loja própria de moda online, com curadoria e envio para todo o Brasil.</p>
-      </div>
+      {{-- Ate aqui este bloco anunciava "HR Moda Online" fixo no HTML, ignorando
+           a loja que de fato vende a peca. Agora mostra o vendedor real. --}}
+      @if ($product->loja)
+        <div class="product-detail__store">
+          <span class="product-detail__store-label">Vendido por</span>
+
+          <a href="{{ route('lojas.show', $product->loja) }}" class="product-detail__store-identity">
+            @if ($product->loja->logotipo)
+              <img class="store-logo" src="{{ asset($product->loja->logotipo) }}" alt="Logotipo de {{ $product->loja->nomeExibicao() }}">
+            @else
+              {{-- nenhuma loja preencheu logotipo ainda, entao o monograma e o
+                   que aparece na pratica, nao um caso de excecao raro --}}
+              <span class="store-logo store-logo--initials" aria-hidden="true">{{ $product->loja->iniciais() }}</span>
+            @endif
+            <strong class="product-detail__store-name">{{ $product->loja->nomeExibicao() }}</strong>
+          </a>
+
+          @if ($product->loja->bio_loja)
+            <p>{{ $product->loja->bio_loja }}</p>
+          @endif
+
+          <a href="{{ route('lojas.show', $product->loja) }}" class="btn btn-outline product-detail__store-cta">
+            Ver produtos da loja
+          </a>
+        </div>
+      @endif
     </div>
   </div>
 
