@@ -16,7 +16,7 @@
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21v-2a5 5 0 0 1 5-5h8a5 5 0 0 1 5 5v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
       Perfil
     </a>
-    <a href="#endereco">
+    <a href="#secao-endereco">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
       Endereço
     </a>
@@ -101,7 +101,7 @@
       </div>
     </section>
 
-    <section class="settings-card settings-anim" id="endereco" style="animation-delay: .14s">
+    <section class="settings-card settings-anim" id="secao-endereco" style="animation-delay: .14s">
       <div class="settings-card__head">
         <span class="settings-badge">
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
@@ -139,10 +139,9 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><line x1="21" y1="12" x2="9" y2="12"></line></svg>
           Sair da sua conta
         </div>
-        <form method="POST" action="{{ route('logout') }}">
-          @csrf
-          <button type="submit" class="settings-account-row__action">Sair</button>
-        </form>
+        {{-- botao associado ao form "logout-form" por atributo: um <form> nao
+             pode ficar aninhado dentro do form de Configuracoes --}}
+        <button type="submit" form="logout-form" class="settings-account-row__action">Sair</button>
       </div>
     </section>
 
@@ -152,6 +151,10 @@
         Salvar alterações
       </button>
     </div>
+  </form>
+
+  <form method="POST" action="{{ route('logout') }}" id="logout-form">
+    @csrf
   </form>
 </section>
 @endsection

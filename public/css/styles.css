@@ -1055,6 +1055,12 @@ img {
   letter-spacing: 0.06em;
   color: var(--muted);
 }
+/* display:flex acima tem a mesma especificidade do [hidden] do navegador; sem
+   isto, marcar o monograma como hidden ao trocar de foto nao escondia nada e
+   a foto nova era empurrada para a linha de baixo. */
+.store-logo--initials[hidden] {
+  display: none;
+}
 /* tamanho usado nos formularios de perfil, onde a imagem e o assunto da tela */
 .store-logo--lg {
   width: 84px;
