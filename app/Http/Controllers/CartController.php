@@ -196,18 +196,11 @@ class CartController extends Controller
 
         $pagamento->gerarDocumentoCompra($order, $request->ip(), $user->endereco, $cobranca['codigo']);
 
-        // 3. conferencia com o banco
-        $liquidado = $pagamento->verificarComBanco($order->refresh());
-
-        // cobranca emitida sem credito ainda (pix e boleto): vai para a fila de
-        // analise em vez de ficar parada em "pendente". Cobranca recusada nao
-        // entra na fila -- so o que ficou pendente de confirmacao.
-        if (! $liquidado && $order->refresh()->status_pagamento === 'pendente') {
-            $pagamento->enviarDocParaAnalise($order);
-        }
-
-        // o pedido nasce em andamento, entao o lugar util logo apos a compra e o
-        // acompanhamento, com a linha do tempo -- nao o historico de concluidos.
-        return redirect()->route('orders.tracking')->with('status', 'Pedido #'.$order->id.' realizado com sucesso!');
+        // O passo 3, a conferencia, acontece na tela de pagamento: e la que o
+        // cliente encontra o QR do pix, o codigo de barras do boleto ou o
+        // formulario do cartao. Antes a compra se dava por paga aqui mesmo e
+        // ninguem chegava a ver como pagar.
+        return redirect()->route('orders.pagamento', $order)
+            ->with('status', 'Pedido #'.$order->id.' registrado. Falta só o pagamento.');
     }
 }

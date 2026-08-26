@@ -2775,3 +2775,217 @@ footer a:hover {
     padding-right: 18px;
   }
 }
+
+/* ===== Tela de pagamento (pix, boleto, cartao) ===== */
+.pagamento-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+.pagamento-card {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 28px;
+}
+.pagamento-card__titulo {
+  margin: 0 0 6px;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--fg);
+}
+.pagamento-card__ajuda {
+  margin: 0 0 24px;
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--muted);
+}
+
+/* o QR precisa de fundo branco e margem propria: leitor nenhum le codigo
+   escuro sobre fundo escuro, e o tema da loja e escuro */
+.pagamento-qrcode {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+.pagamento-qrcode svg {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+}
+
+/* mesma razao do QR, e o codigo de barras ainda precisa esticar na largura
+   toda sem perder a proporcao das barras */
+.pagamento-barras {
+  padding: 18px 16px;
+  background: #ffffff;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+}
+.pagamento-barras svg {
+  display: block;
+  width: 100%;
+  min-width: 320px;
+  height: 90px;
+}
+
+.pagamento-codigo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.pagamento-codigo__rotulo {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-dim);
+}
+.pagamento-codigo__valor {
+  display: block;
+  padding: 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--fg);
+  word-break: break-all;
+}
+.pagamento-codigo__valor--linha {
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  text-align: center;
+  word-break: normal;
+}
+
+/* ===== Cartao ===== */
+.cartao-preview {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  aspect-ratio: 1.586;
+  max-width: 340px;
+  padding: 22px;
+  margin-bottom: 28px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #2f2f36 0%, #1b1b1f 100%);
+  border: 1px solid var(--border-strong);
+}
+.cartao-preview__chip {
+  width: 40px;
+  height: 30px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #d8c9a3, #a08c5f);
+}
+.cartao-preview__bandeira {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.cartao-preview__numero {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  color: var(--fg);
+}
+.cartao-preview__rodape {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.cartao-preview__titular {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cartao-form__linha {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* ===== Resumo lateral ===== */
+.pagamento-resumo {
+  position: sticky;
+  top: 24px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 28px;
+}
+.cart-summary__total--destaque span:last-child {
+  font-size: 20px;
+  color: var(--fg);
+}
+.pagamento-resumo__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 0 18px;
+}
+.pagamento-resumo__rotulo {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-dim);
+}
+.pagamento-resumo__valor {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 12px;
+  color: var(--muted);
+  word-break: break-all;
+}
+.pagamento-resumo__aviso {
+  margin: 12px 0 0;
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 1.6;
+  color: var(--muted-dim);
+}
+.pagamento-resumo__voltar {
+  display: block;
+  margin-top: 18px;
+  text-align: center;
+}
+.pagamento-resumo__simulado {
+  margin: 20px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--muted-dim);
+  text-align: center;
+}
+
+@media (max-width: 860px) {
+  .pagamento-layout {
+    grid-template-columns: 1fr;
+  }
+  .pagamento-resumo {
+    position: static;
+  }
+}
+.tracking-card__pagar {
+  align-self: flex-start;
+  margin-top: 14px;
+  padding: 10px 22px;
+  font-size: 12px;
+}

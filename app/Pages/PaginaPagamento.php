@@ -73,6 +73,80 @@ class PaginaPagamento implements Pagamento
         return $cobranca;
     }
 
+    /**
+     * A cobranca emitida no passo 2, relida do JSON do historico.
+     *
+     * O instrumento (payload do pix, digitos do boleto) e grande demais para
+     * merecer coluna nova em orders, e ja esta gravado em 2-pagamento.json.
+     * A tela de pagamento le dali; se o arquivo nao existir -- disco fora do
+     * ar na hora da compra --, reemite a cobranca com o mesmo codigo, que e
+     * deterministico o bastante para o cliente nao ver diferenca.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function cobrancaEmitida(Order $order): ?array
+    {
+        if (blank($order->forma_pagamento)) {
+            return null;
+        }
+
+        $passos = RegistroDeCompra::passosRegistrados($order);
+        $cobranca = $passos[RegistroDeCompra::PASSO_PAGAMENTO]['gateway'] ?? null;
+
+        if (is_array($cobranca) && filled($cobranca['codigo'] ?? null)) {
+            return $cobranca;
+        }
+
+        $valorTotal = (float) $order->total + (float) ($order->valor_frete ?? 0);
+
+        return GatewayDePagamentoSimulado::cobrar($order, $order->forma_pagamento, $valorTotal);
+    }
+
+    /**
+     * Autoriza a cobranca no cartao com os dados que o cliente digitou.
+     *
+     * Aprovado vai direto para "aprovado": cartao liquida na hora, sem fila de
+     * analise. Recusado nao mexe no status -- o pedido continua pendente e o
+     * cliente pode tentar de novo na mesma tela.
+     *
+     * SIMULACAO: quem decide e o GatewayDePagamentoSimulado.
+     *
+     * @param  array<string, mixed>  $dadosCartao
+     * @return array<string, mixed>
+     */
+    public function autorizarCartao(Order $order, array $dadosCartao): array
+    {
+        $autorizacao = GatewayDePagamentoSimulado::autorizarCartao($order, $dadosCartao);
+
+        if ($autorizacao['aprovado']) {
+            $order->update(['status_pagamento' => 'aprovado']);
+        }
+
+        $this->gerarRelatorioLog($order, $autorizacao['aprovado'] ? 'cartao_autorizado' : 'cartao_recusado');
+
+        return $autorizacao;
+    }
+
+    /**
+     * Registra que o cliente informou ter pago o pix ou o boleto.
+     *
+     * Vai para a fila de analise, nao para aprovado: quem confirma credito de
+     * pix e boleto e o banco, e ate a confirmacao chegar o pedido fica com
+     * alguem para conferir.
+     *
+     * @return array<string, mixed>
+     */
+    public function confirmarRecebimento(Order $order): array
+    {
+        $recibo = GatewayDePagamentoSimulado::confirmarRecebimento($order);
+
+        if ($recibo['recebido']) {
+            $this->enviarDocParaAnalise($order);
+        }
+
+        return $recibo;
+    }
+
     public function autenticarTransferencia(Order $order): bool
     {
         $loja = $order->items()->with('product.loja')->first()?->product?->loja;

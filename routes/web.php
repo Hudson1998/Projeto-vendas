@@ -9,6 +9,7 @@ use App\Http\Controllers\LojaDashboardController;
 use App\Http\Controllers\LojaVitrineController;
 use App\Http\Controllers\LojistaAuthController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PagamentoController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductReviewController;
 use App\Http\Controllers\ProfileController;
@@ -46,6 +47,9 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/pedidos', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/pedidos/acompanhar', [OrderController::class, 'tracking'])->name('orders.tracking');
+    // a tela da forma de pagamento escolhida, para onde o checkout redireciona
+    Route::get('/pedidos/{order}/pagamento', [PagamentoController::class, 'show'])->name('orders.pagamento');
+    Route::post('/pedidos/{order}/pagamento', [PagamentoController::class, 'processar'])->name('orders.pagamento.processar');
     Route::post('/pedidos/{order}/cancelar', [OrderController::class, 'cancel'])->name('orders.cancel');
     Route::post('/pedidos/{order}/avaliar', [OrderController::class, 'rate'])->name('orders.rate');
 

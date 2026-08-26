@@ -19,6 +19,22 @@ interface Pagamento
      */
     public function cobrar(Order $order, string $forma): array;
 
+    /**
+     * A cobranca ja emitida, para a tela de pagamento redesenhar o instrumento.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function cobrancaEmitida(Order $order): ?array;
+
+    /**
+     * @param  array<string, mixed>  $dadosCartao
+     * @return array<string, mixed>
+     */
+    public function autorizarCartao(Order $order, array $dadosCartao): array;
+
+    /** @return array<string, mixed> */
+    public function confirmarRecebimento(Order $order): array;
+
     public function autenticarTransferencia(Order $order): bool;
 
     public function confirmarDados(Order $order): bool;

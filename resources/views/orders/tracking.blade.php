@@ -65,6 +65,15 @@
           </div>
 
           <p class="tracking-card__message">{{ $etapaAtual['texto'] }}</p>
+
+          {{-- pedido parado na primeira etapa e pedido nao pago: o caminho de
+               volta para a tela da forma de pagamento tem de estar aqui, senao
+               quem escolhe "Pagar depois" nao acha mais a cobranca --}}
+          @if ($pedido->status_pagamento === 'pendente')
+            <a href="{{ route('orders.pagamento', $pedido) }}" class="btn btn-primary tracking-card__pagar">
+              Pagar agora
+            </a>
+          @endif
         </div>
       </div>
 
