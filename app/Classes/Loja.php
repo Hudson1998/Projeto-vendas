@@ -103,6 +103,26 @@ class Loja extends Model
         return implode('', $iniciais) ?: '?';
     }
 
+    /**
+     * Ponto de despacho da loja -- de onde a entrega sai.
+     *
+     * E o endereco de envio do cadastro, nao o fiscal: uma loja pode faturar
+     * de um CNPJ e despachar de outro lugar. O formato termina em
+     * "Cidade - UF" porque e assim que a RotaDeEntrega reconhece o municipio.
+     */
+    public function enderecoDespacho(): ?string
+    {
+        if (blank($this->envio_cidade) || blank($this->envio_estado)) {
+            return null;
+        }
+
+        $logradouro = collect([$this->envio_rua, $this->envio_numero, $this->envio_bairro])
+            ->filter()
+            ->implode(', ');
+
+        return trim($logradouro.', '.$this->envio_cidade.' - '.$this->envio_estado, ', ');
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

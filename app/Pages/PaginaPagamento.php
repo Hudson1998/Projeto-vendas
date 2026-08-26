@@ -4,9 +4,12 @@ namespace App\Pages;
 
 use App\Interfaces\Pagamento;
 use App\Models\Order;
+use App\Support\GatewayDePagamentoSimulado;
+use App\Support\RegistroDeCompra;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class PaginaPagamento implements Pagamento
 {
@@ -38,6 +41,36 @@ class PaginaPagamento implements Pagamento
         ]);
 
         return $order;
+    }
+
+    /**
+     * Passo 2 do historico: emite a cobranca e registra o JSON do pagamento.
+     *
+     * O status do pedido passa a vir da resposta do gateway, nao mais de um
+     * valor fixo por forma de pagamento -- e o gateway que decide se aprovou.
+     *
+     * SIMULACAO: GatewayDePagamentoSimulado sai quando a adquirente entrar.
+     * Ver o cabecalho daquele arquivo para o passo a passo da troca.
+     *
+     * @return array<string, mixed> a resposta do gateway
+     */
+    public function cobrar(Order $order, string $forma): array
+    {
+        $valorTotal = (float) $order->total + (float) ($order->valor_frete ?? 0);
+
+        $cobranca = GatewayDePagamentoSimulado::cobrar($order, $forma, $valorTotal);
+
+        $order->update([
+            'forma_pagamento' => $cobranca['forma'],
+            'status_pagamento' => $cobranca['status'],
+            'codigo_pagamento' => $cobranca['codigo'],
+        ]);
+
+        RegistroDeCompra::registrarPagamento($order->refresh(), $cobranca);
+
+        $this->gerarRelatorioLog($order, 'cobranca_emitida');
+
+        return $cobranca;
     }
 
     public function autenticarTransferencia(Order $order): bool
@@ -73,7 +106,10 @@ class PaginaPagamento implements Pagamento
         RateLimiter::hit($chave, 300);
 
         $pedidosRecentes = Order::where('user_id', $order->user_id)
-            ->where('id', '!=', $order->id)
+            // o pedido ainda nao existe quando a checagem roda no checkout, e
+            // "id != null" nunca e verdadeiro no SQL -- sem esta guarda a
+            // consulta voltava zero sempre e a regra nao pegava nada
+            ->when($order->exists, fn ($query) => $query->where('id', '!=', $order->id))
             ->where('created_at', '>=', now()->subMinutes(5))
             ->count();
 
@@ -86,16 +122,34 @@ class PaginaPagamento implements Pagamento
         return true;
     }
 
+    /**
+     * Passo 3 do historico: confere a cobranca com o banco e grava o JSON.
+     *
+     * Devolve true so quando o credito caiu de fato. Cobranca emitida mas
+     * ainda sem credito (pix e boleto) fica com o status intocado -- quem
+     * chama manda para a fila de analise, onde alguem confirma o dinheiro
+     * antes de a loja separar o pedido.
+     *
+     * SIMULACAO: a resposta vem do GatewayDePagamentoSimulado enquanto nao ha
+     * API do banco parceiro.
+     */
     public function verificarComBanco(Order $order): bool
     {
-        // API do banco parceiro ainda não foi desenvolvida: verificação simulada.
-        $aprovado = filled($order->codigo_pagamento);
+        $conferencia = GatewayDePagamentoSimulado::conferir($order);
 
-        $order->update(['verificado_banco' => $aprovado]);
+        $atualizacao = ['verificado_banco' => $conferencia['liquidado']];
 
-        $this->gerarRelatorioLog($order, $aprovado ? 'verificacao_banco_simulada_ok' : 'verificacao_banco_simulada_falhou');
+        if ($conferencia['status'] !== 'pendente') {
+            $atualizacao['status_pagamento'] = $conferencia['status'];
+        }
 
-        return $aprovado;
+        $order->update($atualizacao);
+
+        RegistroDeCompra::registrarConferencia($order->refresh(), $conferencia);
+
+        $this->gerarRelatorioLog($order, 'conferencia_bancaria_'.$conferencia['status']);
+
+        return $conferencia['liquidado'];
     }
 
     public function gerarDocumentoComprovante(Order $order, string $caminhoArquivo): Order
@@ -105,6 +159,14 @@ class PaginaPagamento implements Pagamento
         return $order;
     }
 
+    /**
+     * Comprovante legivel da compra, ao lado dos JSONs do mesmo pedido.
+     *
+     * A gravacao nao pode derrubar a compra: quando o disco recusa a escrita,
+     * o pedido ja existe, o estoque ja baixou e o carrinho ja esvaziou --
+     * estourar aqui deixava tudo isso feito e ainda devolvia 500 ao cliente.
+     * O caminho so vai para o banco se o arquivo realmente foi escrito.
+     */
     public function gerarDocumentoCompra(Order $order, string $ip, ?string $localizacao, string $codigoPagamento): Order
     {
         $order->update([
@@ -128,15 +190,27 @@ class PaginaPagamento implements Pagamento
             '',
             'Forma de pagamento: '.$order->forma_pagamento,
             'Código de pagamento: '.$codigoPagamento,
+            'Frete: R$ '.number_format((float) ($order->valor_frete ?? 0), 2, ',', '.'),
             'Total: R$ '.number_format((float) $order->total + (float) ($order->valor_frete ?? 0), 2, ',', '.'),
         ]);
 
-        $caminho = "pedidos/{$order->id}/comprovante-compra.txt";
-        Storage::disk('local')->put($caminho, $conteudo);
+        $caminho = RegistroDeCompra::pasta($order).'/comprovante-compra.txt';
 
-        $order->update(['comprovante_pagamento_path' => $caminho]);
+        try {
+            if (Storage::disk('local')->put($caminho, $conteudo) === false) {
+                throw new \RuntimeException('Storage::put devolveu false.');
+            }
 
-        $this->gerarRelatorioLog($order, 'documento_compra_gerado');
+            $order->update(['comprovante_pagamento_path' => $caminho]);
+
+            $this->gerarRelatorioLog($order, 'documento_compra_gerado');
+        } catch (Throwable $e) {
+            Log::warning('pagamento.documento_compra_falhou', [
+                'order_id' => $order->id,
+                'caminho' => $caminho,
+                'erro' => $e->getMessage(),
+            ]);
+        }
 
         return $order;
     }

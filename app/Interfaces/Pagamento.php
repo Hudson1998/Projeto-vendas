@@ -12,6 +12,13 @@ interface Pagamento
 
     public function boleto(Order $order): Order;
 
+    /**
+     * Emite a cobranca no gateway e registra o passo de pagamento.
+     *
+     * @return array<string, mixed> resposta do gateway
+     */
+    public function cobrar(Order $order, string $forma): array;
+
     public function autenticarTransferencia(Order $order): bool;
 
     public function confirmarDados(Order $order): bool;

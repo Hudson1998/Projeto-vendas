@@ -19,13 +19,24 @@ class CartController extends Controller
 {
     public function index(Request $request): View
     {
-        $itens = (new PaginaInicial)->carrinho($request->user()->id);
+        $user = $request->user();
+
+        $itens = (new PaginaInicial)->carrinho($user->id);
 
         $total = $itens->sum(fn ($item) => $item->product->preco * $item->quantidade);
+
+        // a mesma rota que o checkout vai cobrar, calculada aqui so para o
+        // cliente ver o frete antes de confirmar -- o valor gravado no pedido
+        // e sempre recalculado no servidor, nunca o que a tela mostrou
+        $rota = (new PaginaCompra)->calcularFreteAutomatico(
+            $itens->pluck('product.loja')->filter(),
+            $user,
+        );
 
         return view('cart.index', [
             'itens' => $itens,
             'total' => $total,
+            'rota' => $rota,
         ]);
     }
 
@@ -91,10 +102,11 @@ class CartController extends Controller
     {
         $user = $request->user();
 
+        // a distancia nao vem mais do formulario: o cliente escolhia o proprio
+        // frete digitando o km. Ela sai da rota loja -> endereco do perfil.
         $data = $request->validate([
             'forma_pagamento' => ['required', 'in:pix,cartao,boleto'],
             'tipo_entrega' => ['required', 'in:retirada,entrega'],
-            'distancia_km' => ['nullable', 'numeric', 'min:0', 'max:200'],
         ]);
 
         $pagamento = new PaginaPagamento;
@@ -108,7 +120,7 @@ class CartController extends Controller
 
         $formaPagamento = (new PaginaCompra)->selecionaFormaPagamento($data['forma_pagamento']);
 
-        $itens = CartItem::with('product.variants')->where('user_id', $user->id)->get();
+        $itens = CartItem::with('product.variants', 'product.loja')->where('user_id', $user->id)->get();
 
         if ($itens->isEmpty()) {
             return back()->withErrors(['carrinho' => 'Seu carrinho está vazio.']);
@@ -126,21 +138,30 @@ class CartController extends Controller
             }
         }
 
-        $distanciaKm = (float) ($data['distancia_km'] ?? 3);
-        $valorFrete = $data['tipo_entrega'] === 'entrega' ? (new PaginaCompra)->calcularFrete($distanciaKm) : 0.0;
+        $entrega = $data['tipo_entrega'] === 'entrega';
 
-        $order = DB::transaction(function () use ($user, $itens, $data, $formaPagamento, $distanciaKm, $valorFrete) {
+        // rota automatica: ponto de despacho das lojas do carrinho ate o
+        // endereco cadastrado do cliente. Retirada na loja nao percorre rota.
+        $rota = $entrega
+            ? (new PaginaCompra)->calcularFreteAutomatico($itens->pluck('product.loja')->filter(), $user)
+            : ['distancia_km' => 0.0, 'valor_frete' => 0.0];
+
+        $order = DB::transaction(function () use ($user, $itens, $data, $entrega, $formaPagamento, $rota, $request) {
             $subtotal = $itens->sum(fn ($item) => $item->product->preco * $item->quantidade);
 
             $order = Order::create([
                 'user_id' => $user->id,
                 'total' => $subtotal,
-                'distancia_km' => $data['tipo_entrega'] === 'entrega' ? $distanciaKm : null,
-                'valor_frete' => $valorFrete,
+                'distancia_km' => $entrega ? $rota['distancia_km'] : null,
+                'valor_frete' => $rota['valor_frete'],
                 'status' => 'concluido',
                 'forma_pagamento' => $formaPagamento,
                 'tipo_entrega' => $data['tipo_entrega'],
-                'endereco_entrega' => $data['tipo_entrega'] === 'entrega' ? $user->endereco : null,
+                'endereco_entrega' => $entrega ? $user->endereco : null,
+                // gravados junto com o pedido para que o JSON do pagamento,
+                // logo abaixo, ja saia com a origem da compra preenchida
+                'ip_compra' => $request->ip(),
+                'localizacao' => $user->endereco,
             ]);
 
             foreach ($itens as $item) {
@@ -161,17 +182,28 @@ class CartController extends Controller
             return $order;
         });
 
-        match ($formaPagamento) {
-            'pix' => $pagamento->pix($order),
-            'cartao' => $pagamento->cartao($order),
-            'boleto' => $pagamento->boleto($order),
-        };
+        // Os tres passos da compra, cada um deixando o seu JSON em
+        // storage/app/private/historico-clientes/{cliente}/pedidos/{pedido}/.
+        // Nenhum deles pode derrubar a requisicao: daqui para baixo o pedido ja
+        // esta pago, o estoque ja baixou e o carrinho ja esvaziou -- uma falha
+        // de escrita vira aviso no log, nunca 500 na cara do cliente.
 
-        $codigoPagamento = strtoupper($formaPagamento).'-'.now()->format('YmdHis').'-'.$order->id;
-        $pagamento->gerarDocumentoCompra($order, $request->ip(), $user->endereco, $codigoPagamento);
+        // 1. selecao das pecas
+        (new PaginaCompra)->registrarSelecao($order);
 
-        if ($pagamento->verificarComBanco($order->fresh())) {
-            $pagamento->enviarDocParaAnalise($order->fresh());
+        // 2. cobranca (SIMULACAO -- ver App\Support\GatewayDePagamentoSimulado)
+        $cobranca = $pagamento->cobrar($order, $formaPagamento);
+
+        $pagamento->gerarDocumentoCompra($order, $request->ip(), $user->endereco, $cobranca['codigo']);
+
+        // 3. conferencia com o banco
+        $liquidado = $pagamento->verificarComBanco($order->refresh());
+
+        // cobranca emitida sem credito ainda (pix e boleto): vai para a fila de
+        // analise em vez de ficar parada em "pendente". Cobranca recusada nao
+        // entra na fila -- so o que ficou pendente de confirmacao.
+        if (! $liquidado && $order->refresh()->status_pagamento === 'pendente') {
+            $pagamento->enviarDocParaAnalise($order);
         }
 
         // o pedido nasce em andamento, entao o lugar util logo apos a compra e o

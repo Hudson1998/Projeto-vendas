@@ -4,8 +4,8 @@
 /public/storage
 /storage/*.key
 /storage/app/public
-/storage/app/private/lojistas-kyc
-/storage/app/private/pedidos
+/storage/app/private/*
+!/storage/app/private/.gitignore
 /storage/framework/cache/*
 !/storage/framework/cache/.gitignore
 /storage/framework/sessions/*

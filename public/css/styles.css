@@ -2286,6 +2286,16 @@ footer a:hover {
 .cart-summary__endereco--vazio {
   color: #e0a3a3;
 }
+.cart-summary__rota {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--muted);
+  margin: 10px 0 0;
+}
+.cart-summary__rota strong {
+  font-weight: 500;
+  color: var(--fg);
+}
 .cart-summary__total {
   display: flex;
   justify-content: space-between;

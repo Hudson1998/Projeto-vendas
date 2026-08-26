@@ -239,7 +239,9 @@ class PaginaInicial implements PagInicial
 
     public function carrinho(int $userId): Collection
     {
-        return CartItem::with('product')
+        // a loja vem junto porque o carrinho calcula o frete pelo ponto de
+        // despacho dela; sem o eager load seria um SELECT por item na tela
+        return CartItem::with('product.loja')
             ->where('user_id', $userId)
             ->latest()
             ->get();

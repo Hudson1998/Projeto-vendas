@@ -188,6 +188,54 @@ Documentos de KYC do lojista são diferentes: vão para o disco `local`
 Limites: 20 MB no PHP (`docker/php/uploads.ini`), 5 MB na validação da
 aplicação.
 
+## Compra, pagamento e frete
+
+### Os três passos deixam um JSON cada
+
+`CartController::checkout` executa a compra em três passos, e cada um grava o
+seu próprio arquivo em
+`storage/app/private/historico-clientes/{user_id}/pedidos/{order_id}/`:
+
+| Arquivo | Passo | Quem grava |
+|---|---|---|
+| `1-selecao.json` | peças escolhidas, variante e preço congelados | `PaginaCompra::registrarSelecao` |
+| `2-pagamento.json` | cobrança emitida, frete, total, IP e localização | `PaginaPagamento::cobrar` |
+| `3-conferencia.json` | resposta do banco sobre aquela cobrança | `PaginaPagamento::verificarComBanco` |
+
+Quem escreve é `App\Support\RegistroDeCompra`; `passosRegistrados()` lê os três
+de volta. A pasta é por cliente porque o destino desses dados é o documento de
+histórico dele — montá-lo será ler a pasta, sem consultar o banco.
+
+**Nada disso pode derrubar a compra.** Quando os passos rodam, o pedido já
+existe, o estoque já baixou e o carrinho já esvaziou: falha de escrita vira
+`Log::warning`, nunca exceção. Foi justamente o contrário que quebrava o
+"Confirmar pedido" — ver a armadilha do disco `local` mais abaixo.
+
+### Frete: mínimo de R$ 12,00, +R$ 5,00 por km acima de 6 km
+
+`PaginaCompra::calcularFrete` — R$ 12,00 é piso em qualquer distância; passando
+de 6 km, cada km excedente custa R$ 5,00 e km quebrado conta inteiro. As três
+constantes (`FRETE_MINIMO`, `FRETE_KM_INCLUSOS`, `FRETE_POR_KM_EXCEDENTE`)
+ficam no topo da classe.
+
+A distância **não vem do formulário** — o comprador escolheria o próprio frete.
+`App\Support\RotaDeEntrega` calcula a rota entre o ponto de despacho da loja
+(`Loja::enderecoDespacho()`, dos campos `envio_*`) e o endereço do perfil do
+cliente. Sem geocodificador: reconhece "Cidade - UF" nas duas pontas, busca
+numa tabela local de coordenadas e aplica haversine × 1,3. Cidade não listada
+cai na capital da UF; mesma cidade vale 6 km (o piso); nada reconhecido também
+cai no piso. Carrinho com várias lojas paga pelo trecho mais longo.
+
+### O gateway é simulado, e sai inteiro
+
+`App\Support\GatewayDePagamentoSimulado` existe porque não há adquirente nem
+API de banco. Ele devolve o mesmo formato de um gateway real (`cobrar()`,
+`conferir()`, `gerarCodigo()`), e todo campo de mentira vem marcado com
+`simulado: true`. O cabeçalho do arquivo tem o passo a passo do descarte: só
+`PaginaPagamento` o referencia, em dois pontos. Cartão aprova na hora
+(`aprovado` → etapa 3); pix e boleto nascem pendentes e vão para
+`aguardando_analise`, a fila de `PaginaAnalise`.
+
 ## Armadilhas conhecidas
 
 **HTTP 500 depois de rodar `artisan` como root.** As views compiladas em
@@ -196,6 +244,15 @@ consegue sobrescrevê-las. Por isso todo comando leva `-u www-data`. Para sair
 do buraco: `php artisan view:clear` e
 `chown -R www-data:www-data storage bootstrap/cache`. O `entrypoint.sh` limpa
 as views a cada boot exatamente por causa disso.
+
+**Disco `local` inacessível ao Apache.** Um `artisan` rodado como root cria
+`storage/app/private` com dono root e modo 0700; depois disso o `www-data` não
+consegue nem abrir a raiz do disco, e o Flysystem estoura
+`UnableToCreateDirectory` — o `throw => false` do `config/filesystems.php` não
+pega esse caso, porque a falha é na construção do adapter, antes de qualquer
+`put()`. É o mesmo buraco do 500 acima, com outra cara. Saída:
+`chown -R www-data:www-data storage`. O diretório agora é versionado (com
+`.gitignore` dentro) e o `entrypoint.sh` o recria antes do `chown`.
 
 **`db is unhealthy` no primeiro boot.** A inicialização do datadir do MySQL
 passa de 2 minutos em máquina lenta. O healthcheck já tem 30 retries e

@@ -99,13 +99,15 @@
             @if (auth()->user()->endereco)
               <p class="cart-summary__endereco">{{ auth()->user()->endereco }}</p>
               <a href="{{ route('profile.edit') }}" class="link-btn">Alterar endereço</a>
+              <p class="cart-summary__rota">
+                Rota calculada automaticamente do despacho da loja até você:
+                <strong>{{ number_format($rota['distancia_km'], 1, ',', '.') }} km</strong>.
+              </p>
             @else
               <p class="cart-summary__endereco cart-summary__endereco--vazio">Nenhum endereço cadastrado.</p>
               <a href="{{ route('profile.edit') }}" class="link-btn">Cadastrar endereço</a>
             @endif
-            <label for="distancia_km" style="margin-top: 12px;">Distância estimada até você (km)</label>
-            <input type="number" id="distancia_km" name="distancia_km" min="0" max="200" step="0.1" value="3">
-            <span class="field__hint">Frete: R$ 12 até 3km, +R$ 10 a cada 6km adicionais.</span>
+            <span class="field__hint">Frete: R$ 12,00 até 6 km. Acima disso, R$ 5,00 por km excedente.</span>
           </div>
 
           <div class="cart-summary__total">
@@ -129,69 +131,73 @@
 </section>
 
 <script>
-  const SUBTOTAL_PEDIDO = {{ (float) $total }};
+  // registerPageInit em vez de rodar solto: o ajax-nav.js troca o
+  // #ajax-content sem recarregar a pagina, entao codigo que so executa na
+  // primeira renderizacao morre quando o carrinho e alcancado pelo menu.
+  registerPageInit(function () {
+    const resumoFrete = document.getElementById('resumo-frete');
+    if (!resumoFrete) return; // carrinho vazio: nao ha resumo para atualizar
 
-  function calcularFrete(distanciaKm) {
-    if (distanciaKm <= 3) return 12;
-    const faixas = Math.ceil((distanciaKm - 3) / 6);
-    return 12 + faixas * 10;
-  }
+    const SUBTOTAL_PEDIDO = {{ (float) $total }};
 
-  function formatarMoeda(valor) {
-    return 'R$ ' + valor.toFixed(2).replace('.', ',');
-  }
+    // frete ja calculado no servidor pela rota loja -> endereco do cliente.
+    // A tela nao recalcula distancia: ela so mostra o que o checkout vai cobrar.
+    const FRETE_ENTREGA = {{ (float) $rota['valor_frete'] }};
 
-  function atualizarResumo() {
-    const entrega = document.querySelector('input[name="tipo_entrega"]:checked').value === 'entrega';
-    const distancia = parseFloat(document.getElementById('distancia_km')?.value || '0') || 0;
-    const frete = entrega ? calcularFrete(distancia) : 0;
+    function formatarMoeda(valor) {
+      return 'R$ ' + valor.toFixed(2).replace('.', ',');
+    }
 
-    document.getElementById('resumo-frete').textContent = formatarMoeda(frete);
-    document.getElementById('resumo-total').textContent = formatarMoeda(SUBTOTAL_PEDIDO + frete);
+    function atualizarResumo() {
+      const entrega = document.querySelector('input[name="tipo_entrega"]:checked').value === 'entrega';
+      const frete = entrega ? FRETE_ENTREGA : 0;
 
-    return { entrega, distancia, frete };
-  }
+      resumoFrete.textContent = formatarMoeda(frete);
+      document.getElementById('resumo-total').textContent = formatarMoeda(SUBTOTAL_PEDIDO + frete);
 
-  document.querySelectorAll('[data-toggle-endereco]').forEach((radio) => {
-    radio.addEventListener('change', () => {
-      document.getElementById('bloco-endereco').style.display =
-        document.querySelector('input[name="tipo_entrega"]:checked').value === 'entrega' ? 'block' : 'none';
-      atualizarResumo();
+      return { entrega, frete };
+    }
+
+    document.querySelectorAll('[data-toggle-endereco]').forEach((radio) => {
+      radio.addEventListener('change', () => {
+        document.getElementById('bloco-endereco').style.display =
+          document.querySelector('input[name="tipo_entrega"]:checked').value === 'entrega' ? 'block' : 'none';
+        atualizarResumo();
+      });
     });
-  });
 
-  document.getElementById('distancia_km')?.addEventListener('input', atualizarResumo);
-  atualizarResumo();
+    atualizarResumo();
 
-  document.getElementById('clear-cart-btn')?.addEventListener('click', () => {
-    confirmarAcao({
-      titulo: 'Limpar carrinho',
-      mensagem: 'Tem certeza que deseja remover todos os itens do carrinho?',
-      textoConfirmar: 'Limpar',
-      textoCancelar: 'Desistir',
-      onConfirm: () => document.getElementById('clear-cart-form').submit(),
+    document.getElementById('clear-cart-btn')?.addEventListener('click', () => {
+      confirmarAcao({
+        titulo: 'Limpar carrinho',
+        mensagem: 'Tem certeza que deseja remover todos os itens do carrinho?',
+        textoConfirmar: 'Limpar',
+        textoCancelar: 'Desistir',
+        onConfirm: () => document.getElementById('clear-cart-form').submit(),
+      });
     });
-  });
 
-  const formCheckout = document.getElementById('btn-confirmar-pedido')?.closest('form');
-  let checkoutConfirmado = false;
+    const formCheckout = document.getElementById('btn-confirmar-pedido')?.closest('form');
+    let checkoutConfirmado = false;
 
-  formCheckout?.addEventListener('submit', (e) => {
-    if (checkoutConfirmado) return;
-    e.preventDefault();
+    formCheckout?.addEventListener('submit', (e) => {
+      if (checkoutConfirmado) return;
+      e.preventDefault();
 
-    const { frete } = atualizarResumo();
-    const total = SUBTOTAL_PEDIDO + frete;
+      const { frete } = atualizarResumo();
+      const total = SUBTOTAL_PEDIDO + frete;
 
-    confirmarAcao({
-      titulo: 'Confirmar pedido',
-      mensagem: `Subtotal: ${formatarMoeda(SUBTOTAL_PEDIDO)} · Frete: ${formatarMoeda(frete)} · Total: ${formatarMoeda(total)}. Deseja finalizar a compra?`,
-      textoConfirmar: 'Pagar agora',
-      textoCancelar: 'Voltar',
-      onConfirm: () => {
-        checkoutConfirmado = true;
-        formCheckout.requestSubmit();
-      },
+      confirmarAcao({
+        titulo: 'Confirmar pedido',
+        mensagem: `Subtotal: ${formatarMoeda(SUBTOTAL_PEDIDO)} · Frete: ${formatarMoeda(frete)} · Total: ${formatarMoeda(total)}. Deseja finalizar a compra?`,
+        textoConfirmar: 'Pagar agora',
+        textoCancelar: 'Voltar',
+        onConfirm: () => {
+          checkoutConfirmado = true;
+          formCheckout.requestSubmit();
+        },
+      });
     });
   });
 </script>

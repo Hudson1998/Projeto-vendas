@@ -35,6 +35,12 @@ fi
 # sumir. Limpar no boot garante que tudo seja recompilado pelo dono certo.
 php artisan view:clear
 
+# o disco 'local' (comprovantes, JSONs do historico do cliente, KYC do lojista)
+# so consegue abrir se a raiz existir e pertencer ao www-data. Criada aqui antes
+# do chown porque um "artisan" rodado como root ja a criou com dono root e modo
+# 0700, e o Apache passou a devolver 500 ao confirmar pedido.
+mkdir -p storage/app/private
+
 chown -R www-data:www-data storage bootstrap/cache public/uploads 2>/dev/null || true
 
 # A feature sshd do devcontainer instala o servidor, mas quem o inicia e o
