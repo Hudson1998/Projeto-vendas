@@ -487,9 +487,26 @@ img {
   align-items: center;
   justify-content: center;
   transition: border-color 0.25s ease;
+  /* o <button> nasce com padding proprio do navegador (1px 6px no Chrome) e,
+     com o box-sizing: border-box global, ele comia a area util: a foto ficava
+     espremida em ~20x30 no meio do circulo de 34px. Zerar aqui e o que faz a
+     imagem preencher o avatar inteiro. O overflow recorta o excesso no
+     circulo, dispensando border-radius na propria imagem. */
+  padding: 0;
+  overflow: hidden;
 }
 .profile-avatar:hover {
   border-color: var(--fg);
+}
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  /* cover mantem a proporcao e cobre todo o circulo; sem isto uma foto
+     retangular apareceria deformada ou com faixas vazias nas laterais */
+  object-fit: cover;
+  /* block remove o espaco de linha-base do inline, que empurrava a foto
+     alguns pixels para cima dentro do botao */
+  display: block;
 }
 .profile-menu {
   position: absolute;

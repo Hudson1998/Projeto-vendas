@@ -103,8 +103,14 @@
         </div>
 
         <div class="profile-dropdown header-account__item--desktop" id="profile-dropdown">
-          <button type="button" id="profile-toggle" class="profile-avatar" aria-haspopup="menu" aria-expanded="false">
-            {{ auth()->user()->initials() }}
+          {{-- aria-label fixo: com a foto no lugar das iniciais o botao ficaria
+               sem nome acessivel, porque a imagem e decorativa (alt vazio) --}}
+          <button type="button" id="profile-toggle" class="profile-avatar" aria-haspopup="menu" aria-expanded="false" aria-label="Menu da conta">
+            @if (auth()->user()->foto)
+              <img src="{{ asset(auth()->user()->foto) }}" alt="">
+            @else
+              {{ auth()->user()->initials() }}
+            @endif
           </button>
           <div class="profile-menu" id="profile-menu" role="menu">
             <div class="profile-menu__header">
