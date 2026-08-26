@@ -144,6 +144,21 @@ registerPageInit(function () {
 `lojista-cadastro.js`. Ignorar isso produz o bug clássico "funciona ao dar F5,
 não funciona ao clicar no menu".
 
+**Há dois registros por trás disso, e a diferença importa.** Um `<script>` de
+`public/js/` carrega uma vez e vale para sempre; um `<script>` inline dentro de
+`#ajax-content` (ou empilhado em `@push('scripts')`) é **re-executado a cada
+troca de página**. O `ajax-nav.js` separa os dois por
+`document.currentScript` — os de página são descartados na troca seguinte, os
+globais ficam. Sem essa separação a lista crescia sem limite: cada visita ao
+`/carrinho` deixava mais uma cópia do inicializador dele, que seguia rodando e
+religando listeners em todas as páginas seguintes.
+
+Corolário: **estado que vive fora do `#ajax-content` não é limpo pela troca.**
+`body.modal-open` (o `overflow: hidden` do modal de confirmação) é o caso real
+— o `#confirm-modal` some com a troca, mas a classe no `<body>` ficava, e a
+página de destino abria sem rolagem. O `swapContent` remove a classe de
+propósito; qualquer trava nova no `<body>` precisa do mesmo cuidado.
+
 ### A vitrine renderiza no cliente
 
 A home injeta o catálogo como JSON e `public/js/app.js` faz filtro por

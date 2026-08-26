@@ -2,10 +2,40 @@
   var contentId = 'ajax-content';
   var loaderEl = null;
   var loaderTimer = null;
-  window.__pageInitializers = window.__pageInitializers || [];
+
+  /* Dois registros, e nao um so.
+     Os JS do layout (app.js, flash.js, cep.js...) carregam uma unica vez e
+     valem para sempre. Ja o <script> inline de uma pagina vive dentro do
+     #ajax-content (ou do #ajax-scripts) e e re-executado a cada troca.
+     Guardar os dois no mesmo array fazia a lista crescer sem parar: cada
+     visita ao /carrinho deixava mais uma copia do inicializador dele, que
+     continuava rodando -- e religando listeners -- em todas as paginas
+     seguintes. Dois modais abrindo sobre o mesmo clique era o sintoma. */
+  var globalInits = [];
+  var pageInits = [];
+  var trocandoPagina = false;
+
+  /* De onde veio a chamada: script do layout ou script da pagina.
+     E o elemento <script> que decide, nao o momento da chamada -- na primeira
+     carga (sem troca nenhuma) o script da pagina tambem precisa entrar como
+     "de pagina", senao ficaria no registro permanente e vazaria do mesmo
+     jeito quando o usuario saisse e voltasse. */
+  function ehScriptDePagina() {
+    var script = document.currentScript;
+    if (!script || !script.closest) return trocandoPagina;
+    return !!script.closest('#' + contentId + ', #ajax-scripts');
+  }
 
   window.registerPageInit = function registerPageInit(fn) {
-    window.__pageInitializers.push(fn);
+    if (ehScriptDePagina()) {
+      pageInits.push(fn);
+      // durante uma troca quem executa e o afterContentReady(); chamar aqui
+      // tambem rodaria o inicializador duas vezes e dobraria os listeners
+      if (!trocandoPagina) fn();
+      return;
+    }
+
+    globalInits.push(fn);
     fn();
   };
 
@@ -53,7 +83,7 @@
   }
 
   function afterContentReady() {
-    window.__pageInitializers.forEach(function (fn) {
+    globalInits.concat(pageInits).forEach(function (fn) {
       try {
         fn();
       } catch (e) {
@@ -84,6 +114,31 @@
       window.__ngAppRef = undefined;
     }
 
+    /* O #confirm-modal mora dentro do #ajax-content e some junto com a troca,
+       mas a trava de rolagem que ele acende (body.modal-open -> overflow:
+       hidden) fica no <body> e sobrevive. Navegar com o modal aberto -- que e
+       exatamente o que "Pagar agora" faz -- deixava a pagina de destino sem
+       barra de rolagem, presa, ate um F5. Solta a trava junto com o modal. */
+    document.body.classList.remove('modal-open');
+
+    // os inicializadores da pagina que esta saindo morrem com ela; os scripts
+    // da pagina nova registram os seus logo abaixo, dentro do runScripts
+    pageInits = [];
+    trocandoPagina = true;
+
+    try {
+      trocarConteudo(doc, current, newContent);
+    } finally {
+      // se um script da pagina estourar, a flag nao pode ficar presa em true:
+      // a proxima navegacao registraria tudo como "de pagina" e nada rodaria
+      trocandoPagina = false;
+    }
+
+    afterContentReady();
+    return true;
+  }
+
+  function trocarConteudo(doc, current, newContent) {
     document.title = doc.title || document.title;
     current.innerHTML = newContent.innerHTML;
     runScripts(current);
@@ -110,9 +165,6 @@
       currentScripts.innerHTML = newScripts ? newScripts.innerHTML : '';
       runScripts(currentScripts);
     }
-
-    afterContentReady();
-    return true;
   }
 
   function visit(url, options) {
@@ -135,7 +187,10 @@
         if (ok && push) {
           history.pushState({ ajax: true }, '', result.res.url || url);
         }
-        window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+        // 'instant' in window nunca era verdadeiro (window nao tem essa propriedade),
+        // entao caia em 'auto', que obedece o scroll-behavior herdado. A forma de
+        // dois argumentos sobe na hora, sem animacao para brigar com o usuario.
+        window.scrollTo(0, 0);
       })
       .catch(function () {
         window.location.href = url;
@@ -202,7 +257,10 @@
         if (ok) {
           history.pushState({ ajax: true }, '', result.res.url || url);
         }
-        window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+        // 'instant' in window nunca era verdadeiro (window nao tem essa propriedade),
+        // entao caia em 'auto', que obedece o scroll-behavior herdado. A forma de
+        // dois argumentos sobe na hora, sem animacao para brigar com o usuario.
+        window.scrollTo(0, 0);
       })
       .catch(function () {
         form.submit();
