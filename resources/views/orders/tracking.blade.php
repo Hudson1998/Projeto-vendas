@@ -91,24 +91,17 @@
           @foreach ($etapas as $i => $etapa)
             <li class="tracking-step {{ $i < $etapaIndice ? 'tracking-step--concluida' : ($i === $etapaIndice ? 'tracking-step--atual' : 'tracking-step--pendente') }}">
               <span class="tracking-step__node">
+                {{-- um icone por etapa, na ordem de ETAPAS_ACOMPANHAMENTO:
+                     relogio, loja, caixa, caminhao --}}
                 @switch($i)
                   @case(0)
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
                     @break
                   @case(1)
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
-                    @break
-                  @case(2)
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>
-                    @break
-                  @case(3)
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 9h16l-1.4-4.2A1 1 0 0 0 17.6 4H6.4a1 1 0 0 0-1 .8L4 9z"/><path d="M5 9v10h14V9"/></svg>
                     @break
-                  @case(4)
+                  @case(2)
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 8l9-4 9 4v8l-9 4-9-4V8z"/><path d="M3 8l9 4 9-4"/></svg>
-                    @break
-                  @case(5)
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 5h16v14H4z"/><path d="M4 10h16"/><path d="M12 5v5"/></svg>
                     @break
                   @default
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M2 7h11v9H2z"/><path d="M13 10h4l3 3v3h-7"/><circle cx="6" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg>

@@ -11,47 +11,50 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Order extends Model
 {
     /**
-     * As etapas da tela "Acompanhar pedido", na ordem em que aparecem.
+     * As quatro etapas da tela "Acompanhar pedido", na ordem em que aparecem.
      *
-     * Nenhuma coluna nova: as quatro primeiras saem de status_pagamento e as
-     * tres ultimas de status_separacao -- veja etapaAcompanhamento().
+     * Nenhuma coluna nova: a primeira sai de status_pagamento e as tres
+     * seguintes de status_separacao -- veja etapaAcompanhamento().
+     *
+     * Eram sete etapas, e as tres que sumiram nao eram esperas de verdade:
+     * "pagamento em analise" e "pagamento aprovado" acontecem dentro da
+     * primeira, e "pronto pra entrega" e o fim da separacao, nao um estagio
+     * proprio. Trilha curta e o que o cliente consegue ler de relance.
      */
     public const ETAPAS_ACOMPANHAMENTO = [
         [
-            'rotulo' => 'Pendente de pagamento',
+            'rotulo' => 'Aguardando pagamento',
             'chip' => 'Aguardando pagamento',
-            'texto' => 'Ainda não identificamos o seu pagamento. Assim que ele for registrado, o pedido segue sozinho para a próxima etapa.',
-        ],
-        [
-            'rotulo' => 'Pagamento em análise',
-            'chip' => 'Em análise',
-            'texto' => 'Recebemos o seu pagamento e ele está em conferência. Assim que for aprovado, a loja é avisada automaticamente.',
-        ],
-        [
-            'rotulo' => 'Pagamento aprovado',
-            'chip' => 'Pagamento aprovado',
-            'texto' => 'Pagamento confirmado. Seu pedido já foi encaminhado para a loja.',
+            'texto' => 'Assim que o pagamento for confirmado, seu pedido segue sozinho para a loja.',
         ],
         [
             'rotulo' => 'Aguardando resposta da loja',
             'chip' => 'Aguardando a loja',
-            'texto' => 'A loja está confirmando a disponibilidade das peças. Isso costuma levar até um dia útil.',
+            'texto' => 'Pagamento confirmado. A loja está conferindo a disponibilidade das peças, o que costuma levar até um dia útil.',
         ],
         [
             'rotulo' => 'Pedido em separação',
             'chip' => 'Em separação',
-            'texto' => 'Suas peças estão sendo separadas e conferidas no estoque da loja.',
-        ],
-        [
-            'rotulo' => 'Pedido pronto pra entrega',
-            'chip' => 'Pronto pra entrega',
-            'texto' => 'Pedido embalado e aguardando a coleta da transportadora.',
+            'texto' => 'Suas peças estão sendo separadas e embaladas no estoque da loja.',
         ],
         [
             'rotulo' => 'Pedido a caminho',
             'chip' => 'A caminho',
             'texto' => 'Saiu para entrega. Você recebe um aviso quando o motorista estiver próximo.',
         ],
+    ];
+
+    /**
+     * Variacao da primeira etapa quando o cliente ja avisou que pagou.
+     *
+     * A etapa continua sendo "Aguardando pagamento" -- o dinheiro ainda nao foi
+     * confirmado --, mas dizer a quem acabou de pagar que nada foi identificado
+     * seria falso. Veja etapaAtual().
+     */
+    private const ETAPA_PAGAMENTO_EM_ANALISE = [
+        'rotulo' => 'Aguardando pagamento',
+        'chip' => 'Pagamento em análise',
+        'texto' => 'Recebemos o aviso do seu pagamento e ele está em conferência. Assim que o banco confirmar, a loja é avisada automaticamente.',
     ];
 
     protected $fillable = [
@@ -91,12 +94,15 @@ class Order extends Model
     ];
 
     /**
-     * Indice (0 a 5) da etapa em que o pedido esta agora, ou null quando ele
+     * Indice (0 a 3) da etapa em que o pedido esta agora, ou null quando ele
      * saiu do fluxo -- cancelado ou com pagamento recusado.
      *
-     * "Pagamento aprovado" e um marco instantaneo, nunca uma espera: assim que
-     * o pagamento e aprovado o pedido ja passa a aguardar a loja (etapa 2) e a
-     * etapa 1 aparece como concluida.
+     * O pagamento so vale como pago em 'aprovado': 'pendente' e
+     * 'aguardando_analise' seguram o pedido na primeira etapa, porque em
+     * nenhum dos dois o dinheiro foi confirmado.
+     *
+     * 'embalado' cai na mesma etapa de 'separado': embalar e o fim da
+     * separacao, e o pedido so muda de estagio quando sai para entrega.
      */
     public function etapaAcompanhamento(): ?int
     {
@@ -105,14 +111,9 @@ class Order extends Model
         }
 
         return match ($this->status_separacao) {
-            'enviado' => 6,
-            'embalado' => 5,
-            'separado' => 4,
-            default => match ($this->status_pagamento) {
-                'aprovado' => 3,
-                'aguardando_analise' => 1,
-                default => 0,
-            },
+            'enviado' => 3,
+            'embalado', 'separado' => 2,
+            default => $this->status_pagamento === 'aprovado' ? 1 : 0,
         };
     }
 
@@ -128,7 +129,15 @@ class Order extends Model
     {
         $indice = $this->etapaAcompanhamento();
 
-        return $indice === null ? null : self::ETAPAS_ACOMPANHAMENTO[$indice];
+        if ($indice === null) {
+            return null;
+        }
+
+        if ($indice === 0 && $this->status_pagamento === 'aguardando_analise') {
+            return self::ETAPA_PAGAMENTO_EM_ANALISE;
+        }
+
+        return self::ETAPAS_ACOMPANHAMENTO[$indice];
     }
 
     /** Quanto da trilha ja foi percorrido, em porcentagem. */
