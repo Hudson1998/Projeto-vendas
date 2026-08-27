@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Classes\Loja;
+use App\Classes\Transportadora;
 use App\Models\Order;
 use App\Pages\PaginaAnalise;
 use App\Pages\PaginaLojaDashboard;
@@ -166,6 +167,15 @@ class LojaDashboardController extends Controller
         return back()->with('status', 'Pedido #'.$order->id.' despachado.');
     }
 
+    public function entregar(Request $request, Order $order): RedirectResponse
+    {
+        $this->autorizarPedido($request, $order);
+
+        (new PaginaAnalise)->entregar($order);
+
+        return back()->with('status', 'Pedido #'.$order->id.' marcado como entregue.');
+    }
+
     public function transportadoras(Request $request): View
     {
         $loja = $this->lojaAtual($request);
@@ -174,7 +184,7 @@ class LojaDashboardController extends Controller
         return view('loja.transportadoras', [
             'loja' => $loja,
             'vinculadas' => $loja->transportadoras()->get(),
-            'disponiveis' => \App\Classes\Transportadora::where('ativo', true)->orderBy('nome')->get(),
+            'disponiveis' => Transportadora::where('ativo', true)->orderBy('nome')->get(),
         ]);
     }
 
@@ -198,7 +208,7 @@ class LojaDashboardController extends Controller
         return back()->with('status', 'Transportadora cadastrada e vinculada à sua loja.');
     }
 
-    public function vincular(Request $request, \App\Classes\Transportadora $transportadora): RedirectResponse
+    public function vincular(Request $request, Transportadora $transportadora): RedirectResponse
     {
         $loja = $this->lojaAtual($request);
 
@@ -207,7 +217,7 @@ class LojaDashboardController extends Controller
         return back()->with('status', 'Transportadora "'.$transportadora->nome.'" vinculada.');
     }
 
-    public function desvincular(Request $request, \App\Classes\Transportadora $transportadora): RedirectResponse
+    public function desvincular(Request $request, Transportadora $transportadora): RedirectResponse
     {
         $loja = $this->lojaAtual($request);
 

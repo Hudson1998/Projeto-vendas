@@ -95,6 +95,7 @@ Route::middleware(['auth', 'lojista'])->prefix('loja')->name('loja.')->group(fun
     Route::post('/pedidos/{order}/separar', [LojaDashboardController::class, 'separar'])->name('pedidos.separar');
     Route::post('/pedidos/{order}/embalar', [LojaDashboardController::class, 'embalar'])->name('pedidos.embalar');
     Route::post('/pedidos/{order}/enviar', [LojaDashboardController::class, 'enviar'])->name('pedidos.enviar');
+    Route::post('/pedidos/{order}/entregar', [LojaDashboardController::class, 'entregar'])->name('pedidos.entregar');
 
     Route::get('/transportadoras', [LojaDashboardController::class, 'transportadoras'])->name('transportadoras');
     Route::post('/transportadoras', [LojaDashboardController::class, 'cadastrarTransportadora'])->name('transportadoras.store');

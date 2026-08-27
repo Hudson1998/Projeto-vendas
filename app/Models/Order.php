@@ -11,15 +11,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Order extends Model
 {
     /**
-     * As quatro etapas da tela "Acompanhar pedido", na ordem em que aparecem.
+     * As cinco etapas da tela "Acompanhar pedido", na ordem em que aparecem.
      *
-     * Nenhuma coluna nova: a primeira sai de status_pagamento e as tres
-     * seguintes de status_separacao -- veja etapaAcompanhamento().
+     * Nenhuma coluna nova: a primeira sai de status_pagamento e as demais de
+     * status_separacao -- veja etapaAcompanhamento().
      *
-     * Eram sete etapas, e as tres que sumiram nao eram esperas de verdade:
-     * "pagamento em analise" e "pagamento aprovado" acontecem dentro da
-     * primeira, e "pronto pra entrega" e o fim da separacao, nao um estagio
-     * proprio. Trilha curta e o que o cliente consegue ler de relance.
+     * "Entregue" e a unica etapa final: dali o pedido nao anda mais, e e o
+     * momento em que faz sentido pedir a avaliacao.
      */
     public const ETAPAS_ACOMPANHAMENTO = [
         [
@@ -41,6 +39,11 @@ class Order extends Model
             'rotulo' => 'Pedido a caminho',
             'chip' => 'A caminho',
             'texto' => 'Saiu para entrega. Você recebe um aviso quando o motorista estiver próximo.',
+        ],
+        [
+            'rotulo' => 'Pedido entregue',
+            'chip' => 'Entregue',
+            'texto' => 'Pedido entregue. Obrigado pela compra — avalie as peças quando puder.',
         ],
     ];
 
@@ -94,7 +97,7 @@ class Order extends Model
     ];
 
     /**
-     * Indice (0 a 3) da etapa em que o pedido esta agora, ou null quando ele
+     * Indice (0 a 4) da etapa em que o pedido esta agora, ou null quando ele
      * saiu do fluxo -- cancelado ou com pagamento recusado.
      *
      * O pagamento so vale como pago em 'aprovado': 'pendente' e
@@ -111,10 +114,17 @@ class Order extends Model
         }
 
         return match ($this->status_separacao) {
+            'entregue' => 4,
             'enviado' => 3,
             'embalado', 'separado' => 2,
             default => $this->status_pagamento === 'aprovado' ? 1 : 0,
         };
+    }
+
+    /** O pedido chegou ao fim do fluxo. */
+    public function entregue(): bool
+    {
+        return $this->status_separacao === 'entregue';
     }
 
     public function emAcompanhamento(): bool

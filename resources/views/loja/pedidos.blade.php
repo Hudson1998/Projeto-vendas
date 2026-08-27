@@ -66,8 +66,19 @@
 
               <form method="POST" action="{{ route('loja.pedidos.enviar', $pedido) }}" class="loja-inline-form">
                 @csrf
-                <button type="submit" class="btn btn-primary">Despachar</button>
+                <button type="submit" class="btn btn-outline">Despachar</button>
               </form>
+
+              {{-- so aparece depois do despacho: marcar entrega em pedido que
+                   nem saiu da loja pularia o "a caminho" no acompanhamento --}}
+              @if (in_array($pedido->status_separacao, ['enviado', 'entregue'], true))
+                <form method="POST" action="{{ route('loja.pedidos.entregar', $pedido) }}" class="loja-inline-form">
+                  @csrf
+                  <button type="submit" class="btn btn-primary" @disabled($pedido->entregue())>
+                    {{ $pedido->entregue() ? 'Entregue' : 'Confirmar entrega' }}
+                  </button>
+                </form>
+              @endif
             </td>
           </tr>
         @empty

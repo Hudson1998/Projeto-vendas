@@ -19,6 +19,8 @@ interface Analise
 
     public function enviar(Order $order): Order;
 
+    public function entregar(Order $order): Order;
+
     public function embalagem(Order $order): Order;
 
     public function fragil(Order $order, bool $ehFragil = true): Order;

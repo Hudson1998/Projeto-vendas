@@ -67,6 +67,19 @@ class PaginaAnalise implements Analise
         return $order;
     }
 
+    /**
+     * Ultima etapa do pedido: chegou ao cliente.
+     *
+     * Nao mexe em status nem em status_pagamento -- 'concluido' ali significa
+     * que a compra fechou, nao que a peca foi entregue. Sao trilhas separadas.
+     */
+    public function entregar(Order $order): Order
+    {
+        $order->update(['status_separacao' => 'entregue']);
+
+        return $order;
+    }
+
     public function embalagem(Order $order): Order
     {
         $order->update(['status_separacao' => 'embalado']);

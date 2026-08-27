@@ -92,7 +92,7 @@
             <li class="tracking-step {{ $i < $etapaIndice ? 'tracking-step--concluida' : ($i === $etapaIndice ? 'tracking-step--atual' : 'tracking-step--pendente') }}">
               <span class="tracking-step__node">
                 {{-- um icone por etapa, na ordem de ETAPAS_ACOMPANHAMENTO:
-                     relogio, loja, caixa, caminhao --}}
+                     relogio, loja, caixa, caminhao, confirmacao --}}
                 @switch($i)
                   @case(0)
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
@@ -103,8 +103,11 @@
                   @case(2)
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 8l9-4 9 4v8l-9 4-9-4V8z"/><path d="M3 8l9 4 9-4"/></svg>
                     @break
-                  @default
+                  @case(3)
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M2 7h11v9H2z"/><path d="M13 10h4l3 3v3h-7"/><circle cx="6" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg>
+                    @break
+                  @default
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 12.5l5 5 11-11"/><path d="M20 12v6.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5V6"/></svg>
                 @endswitch
               </span>
               <span class="tracking-step__label">{{ $etapa['rotulo'] }}</span>
