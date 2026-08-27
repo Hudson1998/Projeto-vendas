@@ -207,15 +207,16 @@ aplicação.
 
 ### Os três passos deixam um JSON cada
 
-`CartController::checkout` executa a compra em três passos, e cada um grava o
-seu próprio arquivo em
-`storage/app/private/historico-clientes/{user_id}/pedidos/{order_id}/`:
+A compra acontece em três passos, e cada um grava o seu próprio arquivo em
+`storage/app/private/historico-clientes/{user_id}/pedidos/{order_id}/`. Os dois
+primeiros rodam no `CartController::checkout`; o terceiro só fecha quando o
+cliente paga, na tela de pagamento:
 
-| Arquivo | Passo | Quem grava |
-|---|---|---|
-| `1-selecao.json` | peças escolhidas, variante e preço congelados | `PaginaCompra::registrarSelecao` |
-| `2-pagamento.json` | cobrança emitida, frete, total, IP e localização | `PaginaPagamento::cobrar` |
-| `3-conferencia.json` | resposta do banco sobre aquela cobrança | `PaginaPagamento::verificarComBanco` |
+| Arquivo | Passo | Quem grava | Onde |
+|---|---|---|---|
+| `1-selecao.json` | peças escolhidas, variante e preço congelados | `PaginaCompra::registrarSelecao` | checkout |
+| `2-pagamento.json` | cobrança emitida, frete, total, IP e localização | `PaginaPagamento::cobrar` | checkout |
+| `3-conferencia.json` | resposta do banco sobre aquela cobrança | `PaginaPagamento::verificarComBanco` | tela de pagamento |
 
 Quem escreve é `App\Support\RegistroDeCompra`; `passosRegistrados()` lê os três
 de volta. A pasta é por cliente porque o destino desses dados é o documento de
@@ -241,15 +242,62 @@ numa tabela local de coordenadas e aplica haversine × 1,3. Cidade não listada
 cai na capital da UF; mesma cidade vale 6 km (o piso); nada reconhecido também
 cai no piso. Carrinho com várias lojas paga pelo trecho mais longo.
 
+### A tela de pagamento, uma por forma
+
+O checkout **não conclui o pagamento** — ele emite a cobrança e redireciona
+para `/pedidos/{order}/pagamento` (`PagamentoController`), que desenha o
+instrumento da forma escolhida:
+
+| Forma | O que a tela mostra | Como termina |
+|---|---|---|
+| Pix | QR Code + copia-e-cola | "Já fiz o pagamento" → `aguardando_analise` |
+| Boleto | código de barras + linha digitável + vencimento | "Já fiz o pagamento" → `aguardando_analise` |
+| Cartão | formulário (número, titular, validade, CVV, parcelas) | autoriza na hora → `aprovado` |
+
+Quem sai pelo "Pagar depois" reencontra a cobrança pelo botão **Pagar agora**
+no acompanhamento, que só aparece com `status_pagamento === 'pendente'`.
+Pedido já resolvido não reabre o formulário: `show()` redireciona para o
+acompanhamento, senão um F5 depois de pagar pediria pagamento de novo.
+
+O instrumento **não tem coluna no banco** — é grande e já está gravado em
+`2-pagamento.json`. `PaginaPagamento::cobrancaEmitida()` lê de lá e, se o
+arquivo faltar ou vier sem o payload, reemite a cobrança.
+
+### Os códigos são gerados de verdade, sem biblioteca
+
+Não há pacote de QR nem de código de barras no `composer.json`, e não vai
+haver: um código desenhado "de enfeite" não passa em leitor nenhum.
+
+- `App\Support\QrCode` — encoder QR completo (modo byte, correção M, versões
+  1–20), saída em SVG. Validado contra o decodificador jsQR nas 20 versões.
+- `App\Support\CodigoDeBarras` — Intercalado 2 de 5, a simbologia do boleto.
+  Confere módulo a módulo com o JsBarcode.
+
+**A armadilha que custou tempo:** a segunda cópia da informação de formato do
+QR usa a **coluna 8 para os bits baixos e a linha 8 para os altos**. Trocar
+linha por coluna gera um QR de aparência perfeita e ilegível em qualquer
+leitor — o decodificador lê o nível de correção e a máscara errados e desiste
+antes de chegar nos dados.
+
+Os dois encoders sobrevivem à saída do gateway simulado: pix de verdade também
+precisa virar imagem.
+
 ### O gateway é simulado, e sai inteiro
 
 `App\Support\GatewayDePagamentoSimulado` existe porque não há adquirente nem
-API de banco. Ele devolve o mesmo formato de um gateway real (`cobrar()`,
-`conferir()`, `gerarCodigo()`), e todo campo de mentira vem marcado com
-`simulado: true`. O cabeçalho do arquivo tem o passo a passo do descarte: só
-`PaginaPagamento` o referencia, em dois pontos. Cartão aprova na hora
-(`aprovado` → etapa 3); pix e boleto nascem pendentes e vão para
-`aguardando_analise`, a fila de `PaginaAnalise`.
+API de banco. Todo campo de mentira vem marcado com `simulado: true`, e o
+cabeçalho do arquivo tem o passo a passo do descarte — só `PaginaPagamento` o
+referencia.
+
+**O formato, porém, é real** — é o que os encoders acima desenham. O payload
+pix segue o EMV/BR Code com CRC16 correto; o boleto tem os 44 dígitos com DV
+módulo 11 e a linha digitável de 47 com os DVs módulo 10; o cartão passa por
+Luhn. Mentira são a chave pix, o banco emissor e a autorização.
+
+Cartão de teste que **sempre recusa**: `4000000000000002`
+(`GatewayDePagamentoSimulado::CARTAO_RECUSADO`) — sem ele a tela de erro do
+cartão nunca seria exercitada. Recusa não mexe no status: o pedido continua
+pendente e o cliente tenta de novo na mesma tela.
 
 ## Armadilhas conhecidas
 

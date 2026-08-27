@@ -93,13 +93,36 @@ class PaginaPagamento implements Pagamento
         $passos = RegistroDeCompra::passosRegistrados($order);
         $cobranca = $passos[RegistroDeCompra::PASSO_PAGAMENTO]['gateway'] ?? null;
 
-        if (is_array($cobranca) && filled($cobranca['codigo'] ?? null)) {
+        if (is_array($cobranca) && $this->instrumentoCompleto($cobranca, $order->forma_pagamento)) {
             return $cobranca;
         }
 
         $valorTotal = (float) $order->total + (float) ($order->valor_frete ?? 0);
 
         return GatewayDePagamentoSimulado::cobrar($order, $order->forma_pagamento, $valorTotal);
+    }
+
+    /**
+     * O JSON gravado tem tudo que a tela precisa desenhar?
+     *
+     * Nao basta ter o codigo da cobranca: pix sem payload nao vira QR e boleto
+     * sem os 44 digitos nao vira codigo de barras. Faltando qualquer um deles a
+     * cobranca e reemitida, o que tambem cobre os pedidos gravados antes de o
+     * instrumento existir.
+     *
+     * @param  array<string, mixed>  $cobranca
+     */
+    private function instrumentoCompleto(array $cobranca, string $forma): bool
+    {
+        if (blank($cobranca['codigo'] ?? null)) {
+            return false;
+        }
+
+        return match ($forma) {
+            'pix' => filled($cobranca['instrucao'] ?? null),
+            'boleto' => filled($cobranca['instrucao'] ?? null) && filled($cobranca['codigo_barras'] ?? null),
+            default => true,
+        };
     }
 
     /**
