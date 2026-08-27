@@ -2286,16 +2286,6 @@ footer a:hover {
 .cart-summary__endereco--vazio {
   color: #e0a3a3;
 }
-.cart-summary__rota {
-  font-size: 13px;
-  font-weight: 300;
-  color: var(--muted);
-  margin: 10px 0 0;
-}
-.cart-summary__rota strong {
-  font-weight: 500;
-  color: var(--fg);
-}
 .cart-summary__total {
   display: flex;
   justify-content: space-between;
@@ -2988,4 +2978,124 @@ footer a:hover {
   margin-top: 14px;
   padding: 10px 22px;
   font-size: 12px;
+}
+
+/* ===== Espera do pagamento (pix e boleto) ===== */
+.aguardando {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  margin-top: 24px;
+  padding: 26px 28px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+.aguardando__visual {
+  position: relative;
+  flex: 0 0 120px;
+  width: 120px;
+  height: 120px;
+}
+.aguardando__anel {
+  width: 120px;
+  height: 120px;
+  /* o anel comeca no topo e drena no sentido horario */
+  transform: rotate(-90deg);
+}
+.aguardando__trilha {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 6;
+}
+.aguardando__progresso {
+  fill: none;
+  stroke: var(--fg);
+  stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s linear;
+}
+.aguardando__centro {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.aguardando__pulso {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--fg);
+  animation: aguardando-pulso 1.6s ease-in-out infinite;
+}
+.aguardando__relogio {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  color: var(--fg);
+}
+.aguardando__texto {
+  flex: 1;
+  min-width: 0;
+}
+.aguardando__titulo {
+  display: block;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--fg);
+}
+.aguardando__ajuda {
+  margin: 6px 0 16px;
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.aguardando__alerta {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #6b5a2e;
+  background: rgba(107, 90, 46, 0.18);
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.6;
+  color: #e6d3a3;
+}
+.aguardando__renovar {
+  margin-top: 10px;
+}
+
+/* expirado: o anel para de pulsar e vira aviso */
+.aguardando--expirado .aguardando__pulso {
+  animation: none;
+  background: #c98a8a;
+}
+.aguardando--expirado .aguardando__progresso {
+  stroke: #c98a8a;
+}
+.aguardando--expirado .aguardando__relogio {
+  color: #c98a8a;
+}
+
+@keyframes aguardando-pulso {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.72); }
+}
+
+/* quem prefere menos movimento nao ganha um ponto piscando na tela */
+@media (prefers-reduced-motion: reduce) {
+  .aguardando__pulso { animation: none; }
+  .aguardando__progresso { transition: none; }
+}
+
+@media (max-width: 620px) {
+  .aguardando {
+    flex-direction: column;
+    text-align: center;
+  }
 }

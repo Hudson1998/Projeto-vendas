@@ -159,15 +159,32 @@ class PaginaPagamento implements Pagamento
      *
      * @return array<string, mixed>
      */
-    public function confirmarRecebimento(Order $order): array
+    public function confirmarRecebimento(Order $order, array $cobranca = []): array
     {
-        $recibo = GatewayDePagamentoSimulado::confirmarRecebimento($order);
+        $recibo = GatewayDePagamentoSimulado::confirmarRecebimento($order, $cobranca);
 
         if ($recibo['recebido']) {
             $this->enviarDocParaAnalise($order);
         }
 
+        $this->gerarRelatorioLog($order, $recibo['recebido'] ? 'recebimento_confirmado' : 'recebimento_nao_identificado');
+
         return $recibo;
+    }
+
+    /**
+     * Reemite a cobranca quando a anterior expirou.
+     *
+     * Codigo novo, janela nova: o pix antigo ja nao serve, e deixar o cliente
+     * pagando um QR vencido seria pior do que pedir para gerar outro.
+     *
+     * @return array<string, mixed>
+     */
+    public function renovarCobranca(Order $order): array
+    {
+        $this->gerarRelatorioLog($order, 'cobranca_expirada_renovada');
+
+        return $this->cobrar($order, $order->forma_pagamento);
     }
 
     public function autenticarTransferencia(Order $order): bool

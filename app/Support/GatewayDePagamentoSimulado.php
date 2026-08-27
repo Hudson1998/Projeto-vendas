@@ -70,6 +70,24 @@ class GatewayDePagamentoSimulado
     private const BOLETO_DIAS_VENCIMENTO = 3;
 
     /**
+     * Quanto tempo a cobranca fica valida na tela de pagamento.
+     *
+     * E a janela do cronometro: passando dela o codigo nao serve mais e a tela
+     * oferece emitir outro. Pix de verdade usa uma janela curta assim mesmo.
+     */
+    public const MINUTOS_VALIDADE = 3;
+
+    /**
+     * Quanto o "banco" demora para reconhecer um pix ou boleto pago.
+     *
+     * SIMULACAO, e o numero mais importante deste arquivo para quem testa:
+     * antes disso o "Já fiz o pagamento" responde que ainda nao identificou e
+     * a tela segue aguardando; depois, confirma. Sem essa espera o botao
+     * aprovaria sempre e o estado de espera nunca apareceria.
+     */
+    public const SEGUNDOS_PARA_COMPENSAR = 30;
+
+    /**
      * Cartao de teste que sempre recusa.
      *
      * Um gateway de verdade oferece numeros assim para exercitar o caminho da
@@ -99,6 +117,11 @@ class GatewayDePagamentoSimulado
             'instrucao' => null,
             'codigo_barras' => null,
             'vencimento' => null,
+            // marcos da janela de validade: o cronometro da tela conta a partir
+            // deles, e a expiracao e decidida no servidor, nao no relogio do
+            // navegador -- senao bastaria mexer na hora do computador
+            'emitida_em' => now()->toIso8601String(),
+            'expira_em' => now()->addMinutes(self::MINUTOS_VALIDADE)->toIso8601String(),
             'simulado' => true,
         ];
 
@@ -157,16 +180,62 @@ class GatewayDePagamentoSimulado
      *
      * @return array<string, mixed>
      */
-    public static function confirmarRecebimento(Order $order): array
+    public static function confirmarRecebimento(Order $order, array $cobranca = []): array
     {
+        if (blank($order->codigo_pagamento)) {
+            return [
+                'recebido' => false,
+                'recebido_em' => null,
+                'mensagem' => 'Cobrança não localizada no gateway.',
+                'simulado' => true,
+            ];
+        }
+
+        $recebido = self::segundosDesdeAEmissao($cobranca) >= self::SEGUNDOS_PARA_COMPENSAR;
+
         return [
-            'recebido' => filled($order->codigo_pagamento),
-            'recebido_em' => now()->toIso8601String(),
-            'mensagem' => filled($order->codigo_pagamento)
-                ? 'Pagamento informado. A confirmação do banco costuma levar alguns minutos.'
-                : 'Cobrança não localizada no gateway.',
+            'recebido' => $recebido,
+            'recebido_em' => $recebido ? now()->toIso8601String() : null,
+            'mensagem' => $recebido
+                ? 'Pagamento identificado. A confirmação do banco costuma levar alguns minutos.'
+                : 'Ainda não identificamos esse pagamento. Se você acabou de pagar, aguarde alguns instantes e tente de novo.',
             'simulado' => true,
         ];
+    }
+
+    /** A janela de validade da cobranca ja passou? */
+    public static function expirada(array $cobranca): bool
+    {
+        if (blank($cobranca['expira_em'] ?? null)) {
+            return false;
+        }
+
+        return now()->greaterThan(new \DateTimeImmutable($cobranca['expira_em']));
+    }
+
+    /** Quantos segundos faltam para a cobranca expirar (0 quando ja expirou). */
+    public static function segundosRestantes(array $cobranca): int
+    {
+        if (blank($cobranca['expira_em'] ?? null)) {
+            return self::MINUTOS_VALIDADE * 60;
+        }
+
+        $expira = new \DateTimeImmutable($cobranca['expira_em']);
+
+        return max(0, $expira->getTimestamp() - now()->getTimestamp());
+    }
+
+    /** Ha quantos segundos a cobranca foi emitida. */
+    private static function segundosDesdeAEmissao(array $cobranca): int
+    {
+        if (blank($cobranca['emitida_em'] ?? null)) {
+            // cobranca antiga, sem o marco: nao trava o cliente por isso
+            return self::SEGUNDOS_PARA_COMPENSAR;
+        }
+
+        $emitida = new \DateTimeImmutable($cobranca['emitida_em']);
+
+        return max(0, now()->getTimestamp() - $emitida->getTimestamp());
     }
 
     /**
@@ -208,7 +277,10 @@ class GatewayDePagamentoSimulado
      */
     public static function gerarCodigo(Order $order, string $forma): string
     {
-        return strtoupper($forma).'-'.now()->format('YmdHis').'-'.$order->id;
+        // o sufixo aleatorio nao e enfeite: o carimbo so tem segundos, e uma
+        // cobranca reemitida logo apos a anterior (expirou, cliente pediu
+        // outra) sairia com codigo identico ao que acabou de ser invalidado
+        return strtoupper($forma).'-'.now()->format('YmdHis').'-'.$order->id.'-'.strtoupper(bin2hex(random_bytes(2)));
     }
 
     /**

@@ -227,12 +227,16 @@ existe, o estoque já baixou e o carrinho já esvaziou: falha de escrita vira
 `Log::warning`, nunca exceção. Foi justamente o contrário que quebrava o
 "Confirmar pedido" — ver a armadilha do disco `local` mais abaixo.
 
-### Frete: mínimo de R$ 12,00, +R$ 5,00 por km acima de 6 km
+### Frete: piso de R$ 12,00, +R$ 5,00 por km acima de 6 km, teto de R$ 60,00
 
 `PaginaCompra::calcularFrete` — R$ 12,00 é piso em qualquer distância; passando
-de 6 km, cada km excedente custa R$ 5,00 e km quebrado conta inteiro. As três
-constantes (`FRETE_MINIMO`, `FRETE_KM_INCLUSOS`, `FRETE_POR_KM_EXCEDENTE`)
-ficam no topo da classe.
+de 6 km, cada km excedente custa R$ 5,00 e km quebrado conta inteiro; e R$
+60,00 é teto, o que faz a conta parar de crescer a partir de 16 km. Sem o teto
+uma rota interestadual chegava a milhares de reais. As quatro constantes
+(`FRETE_MINIMO`, `FRETE_KM_INCLUSOS`, `FRETE_POR_KM_EXCEDENTE`,
+`FRETE_MAXIMO`) ficam no topo da classe.
+
+A tela do carrinho **não mostra a regra nem a distância** — só o valor final.
 
 A distância **não vem do formulário** — o comprador escolheria o próprio frete.
 `App\Support\RotaDeEntrega` calcula a rota entre o ponto de despacho da loja
@@ -253,6 +257,14 @@ instrumento da forma escolhida:
 | Pix | QR Code + copia-e-cola | "Já fiz o pagamento" → `aguardando_analise` |
 | Boleto | código de barras + linha digitável + vencimento | "Já fiz o pagamento" → `aguardando_analise` |
 | Cartão | formulário (número, titular, validade, CVV, parcelas) | autoriza na hora → `aprovado` |
+
+Pix e boleto ganham um bloco de **espera**: anel que drena com um cronômetro de
+3 minutos (`GatewayDePagamentoSimulado::MINUTOS_VALIDADE`) e, abaixo dele, o
+botão "Já fiz o pagamento". O botão **consulta de verdade**: o gateway simulado
+só reconhece o crédito depois de `SEGUNDOS_PARA_COMPENSAR` (30s) — antes disso
+responde que não identificou e a tela continua aguardando. Zerado o cronômetro,
+a cobrança expira e a tela oferece gerar outra; quem decide isso é o servidor
+(`expirada()`), não o relógio do navegador.
 
 Quem sai pelo "Pagar depois" reencontra a cobrança pelo botão **Pagar agora**
 no acompanhamento, que só aparece com `status_pagamento === 'pendente'`.

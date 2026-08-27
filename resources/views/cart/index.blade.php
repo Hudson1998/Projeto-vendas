@@ -99,15 +99,13 @@
             @if (auth()->user()->endereco)
               <p class="cart-summary__endereco">{{ auth()->user()->endereco }}</p>
               <a href="{{ route('profile.edit') }}" class="link-btn">Alterar endereço</a>
-              <p class="cart-summary__rota">
-                Rota calculada automaticamente do despacho da loja até você:
-                <strong>{{ number_format($rota['distancia_km'], 1, ',', '.') }} km</strong>.
-              </p>
             @else
               <p class="cart-summary__endereco cart-summary__endereco--vazio">Nenhum endereço cadastrado.</p>
               <a href="{{ route('profile.edit') }}" class="link-btn">Cadastrar endereço</a>
             @endif
-            <span class="field__hint">Frete: R$ 12,00 até 6 km. Acima disso, R$ 5,00 por km excedente.</span>
+            {{-- a regra do frete e a distancia calculada nao aparecem para o
+                 comprador: ele ve o valor final no resumo, e so --}}
+            <span class="field__hint">O frete é calculado automaticamente pelo endereço do seu perfil.</span>
           </div>
 
           <div class="cart-summary__total">
@@ -177,28 +175,9 @@
         onConfirm: () => document.getElementById('clear-cart-form').submit(),
       });
     });
+    // "Confirmar pedido" nao abre mais modal: o proximo passo ja e a tela de
+    // pagamento, onde o cliente ve o total de novo e ainda pode sair sem pagar.
 
-    const formCheckout = document.getElementById('btn-confirmar-pedido')?.closest('form');
-    let checkoutConfirmado = false;
-
-    formCheckout?.addEventListener('submit', (e) => {
-      if (checkoutConfirmado) return;
-      e.preventDefault();
-
-      const { frete } = atualizarResumo();
-      const total = SUBTOTAL_PEDIDO + frete;
-
-      confirmarAcao({
-        titulo: 'Confirmar pedido',
-        mensagem: `Subtotal: ${formatarMoeda(SUBTOTAL_PEDIDO)} · Frete: ${formatarMoeda(frete)} · Total: ${formatarMoeda(total)}. Deseja finalizar a compra?`,
-        textoConfirmar: 'Pagar agora',
-        textoCancelar: 'Voltar',
-        onConfirm: () => {
-          checkoutConfirmado = true;
-          formCheckout.requestSubmit();
-        },
-      });
-    });
   });
 </script>
 @endsection

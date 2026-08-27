@@ -46,6 +46,8 @@
           </div>
         </div>
 
+        @include('orders.partials.aguardando-pagamento')
+
       {{-- ================= BOLETO ================= --}}
       @elseif ($forma === 'boleto')
         <div class="pagamento-card">
@@ -69,6 +71,8 @@
             </button>
           </div>
         </div>
+
+        @include('orders.partials.aguardando-pagamento')
 
       {{-- ================= CARTAO ================= --}}
       @else
@@ -157,13 +161,9 @@
         <span class="pagamento-resumo__valor">{{ $cobranca['codigo'] }}</span>
       </div>
 
+      {{-- o "Já fiz o pagamento" vive no bloco de espera, logo abaixo do
+           cronometro, e nao aqui: e la que o cliente esta olhando --}}
       @if ($forma !== 'cartao')
-        <form method="POST" action="{{ route('orders.pagamento.processar', $pedido) }}" id="form-confirmar-pagamento">
-          @csrf
-          <button type="submit" class="btn btn-primary btn-block" id="btn-ja-paguei">
-            Já fiz o pagamento
-          </button>
-        </form>
         <p class="pagamento-resumo__aviso">
           Confirmamos com o banco antes de liberar o pedido para a loja.
         </p>
@@ -218,6 +218,67 @@
       area.select();
       try { document.execCommand('copy'); aoCopiar(); } catch (e) { /* navegador bloqueou */ }
       document.body.removeChild(area);
+    }
+
+    // ---- cronometro da espera (pix e boleto)
+    var caixa = document.getElementById('aguardando');
+    if (caixa) {
+      var restantes = parseInt(caixa.dataset.segundos, 10) || 0;
+      var total = {{ \App\Support\GatewayDePagamentoSimulado::MINUTOS_VALIDADE }} * 60;
+      var CIRCUNFERENCIA = 327;
+
+      var anel = document.getElementById('aguardando-progresso');
+      var relogio = document.getElementById('aguardando-relogio');
+      var titulo = document.getElementById('aguardando-titulo');
+      var ajuda = document.getElementById('aguardando-ajuda');
+      var renovar = document.getElementById('btn-renovar');
+      var formPaguei = document.getElementById('form-ja-paguei');
+
+      function desenhar() {
+        var minutos = Math.floor(restantes / 60);
+        var segundos = restantes % 60;
+        relogio.textContent = minutos + ':' + String(segundos).padStart(2, '0');
+
+        // o anel esvazia conforme o tempo passa
+        var fracao = total > 0 ? Math.max(0, Math.min(1, restantes / total)) : 0;
+        anel.style.strokeDashoffset = String(CIRCUNFERENCIA * (1 - fracao));
+      }
+
+      function expirar() {
+        caixa.classList.add('aguardando--expirado');
+        relogio.textContent = '0:00';
+        anel.style.strokeDashoffset = String(CIRCUNFERENCIA);
+        titulo.textContent = 'Código expirado';
+        ajuda.textContent = 'A janela de pagamento terminou. Gere um novo código para continuar.';
+        renovar.hidden = false;
+        if (formPaguei) formPaguei.hidden = true;
+      }
+
+      desenhar();
+
+      if (restantes <= 0) {
+        expirar();
+      } else {
+        var relogioId = setInterval(function () {
+          restantes--;
+          if (restantes <= 0) {
+            clearInterval(relogioId);
+            expirar();
+            return;
+          }
+          desenhar();
+        }, 1000);
+
+        // o ajax-nav troca o #ajax-content sem recarregar a pagina; sem parar o
+        // intervalo aqui ele seguiria rodando contra um elemento ja removido,
+        // um por visita a esta tela
+        document.addEventListener('ajaxpage:loaded', function parar() {
+          if (!document.body.contains(caixa)) {
+            clearInterval(relogioId);
+            document.removeEventListener('ajaxpage:loaded', parar);
+          }
+        });
+      }
     }
 
     // ---- formulario do cartao

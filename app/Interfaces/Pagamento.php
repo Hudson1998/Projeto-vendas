@@ -32,8 +32,14 @@ interface Pagamento
      */
     public function autorizarCartao(Order $order, array $dadosCartao): array;
 
+    /**
+     * @param  array<string, mixed>  $cobranca
+     * @return array<string, mixed>
+     */
+    public function confirmarRecebimento(Order $order, array $cobranca = []): array;
+
     /** @return array<string, mixed> */
-    public function confirmarRecebimento(Order $order): array;
+    public function renovarCobranca(Order $order): array;
 
     public function autenticarTransferencia(Order $order): bool;
 

@@ -24,6 +24,15 @@ class PaginaCompra implements Compra
     /** Preco de cada km acima da faixa inclusa. */
     public const FRETE_POR_KM_EXCEDENTE = 5.0;
 
+    /**
+     * Teto do frete, cobrado em qualquer distancia acima do que ele cobre.
+     *
+     * Sem teto a regra por km levava rota interestadual a milhares de reais --
+     * Sao Paulo/Recife dava R$ 13.837 de frete numa peca de R$ 190. O teto
+     * mantem a conta por km onde ela faz sentido e corta o absurdo.
+     */
+    public const FRETE_MAXIMO = 60.0;
+
     public function produtos(?string $categoria = null): Collection
     {
         return Product::query()
@@ -89,13 +98,17 @@ class PaginaCompra implements Compra
      * 6,2 km ja e um km excedente -- porque a rota e uma estimativa e
      * arredondar para baixo entregaria de graca o trecho que sobra.
      *
-     * 6 km -> R$ 12,00    8 km -> R$ 22,00    20 km -> R$ 82,00
+     * O teto de R$ 60,00 corta a conta a partir de 16 km.
+     *
+     * 6 km -> R$ 12,00    8 km -> R$ 22,00    16 km -> R$ 60,00    500 km -> R$ 60,00
      */
     public function calcularFrete(float $distanciaKm): float
     {
         $kmExcedentes = max(0, (int) ceil($distanciaKm - self::FRETE_KM_INCLUSOS));
 
-        return self::FRETE_MINIMO + ($kmExcedentes * self::FRETE_POR_KM_EXCEDENTE);
+        $frete = self::FRETE_MINIMO + ($kmExcedentes * self::FRETE_POR_KM_EXCEDENTE);
+
+        return min($frete, self::FRETE_MAXIMO);
     }
 
     /**

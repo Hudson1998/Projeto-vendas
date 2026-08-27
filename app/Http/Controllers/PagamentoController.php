@@ -40,11 +40,18 @@ class PagamentoController extends Controller
                 ->withErrors(['pagamento' => 'Esse pedido não tem uma cobrança em aberto.']);
         }
 
+        // cobranca vencida: emite outra em vez de mostrar um codigo que o banco
+        // ja nao aceita. O cronometro da tela reinicia junto.
+        if ($order->forma_pagamento !== 'cartao' && GatewayDePagamentoSimulado::expirada($cobranca)) {
+            $cobranca = $pagamento->renovarCobranca($order);
+        }
+
         return view('orders.pagamento', [
             'pedido' => $order,
             'cobranca' => $cobranca,
             'instrumento' => $this->desenharInstrumento($cobranca),
             'parcelasDisponiveis' => $this->parcelas((float) $cobranca['valor']),
+            'segundosRestantes' => GatewayDePagamentoSimulado::segundosRestantes($cobranca),
         ]);
     }
 
@@ -87,10 +94,12 @@ class PagamentoController extends Controller
 
             $mensagem = 'Pagamento aprovado! Pedido #'.$order->id.' confirmado.';
         } else {
-            $recibo = $pagamento->confirmarRecebimento($order);
+            $recibo = $pagamento->confirmarRecebimento($order, $pagamento->cobrancaEmitida($order) ?? []);
 
+            // nao constou no sistema: volta para a mesma tela, que continua
+            // aguardando o pagamento com o cronometro correndo
             if (! $recibo['recebido']) {
-                return back()->withErrors(['pagamento' => $recibo['mensagem']]);
+                return back()->with('aguardando', $recibo['mensagem']);
             }
 
             $mensagem = $order->forma_pagamento === 'pix'
