@@ -18,6 +18,7 @@ export type Granularidade = 'dia' | 'mes' | 'ano';
 @Injectable({ providedIn: 'root' })
 export class DashboardDataService {
   private readonly base = '/admin/graficos';
+  private readonly baseLoja = '/loja/graficos';
 
   constructor(private http: HttpClient) {}
 
@@ -39,5 +40,19 @@ export class DashboardDataService {
 
   vendasPorCategoria(): Observable<PontoDado[]> {
     return this.http.get<PontoDado[]>(`${this.base}/vendas-categoria`);
+  }
+
+  // ---- painel do lojista: mesmo formato {label, valor}, outra origem ----
+
+  lojaLucro(granularidade: Granularidade): Observable<PontoDado[]> {
+    return this.http.get<PontoDado[]>(`${this.baseLoja}/lucro`, { params: { granularidade } });
+  }
+
+  lojaVisitantes(granularidade: Granularidade): Observable<PontoDado[]> {
+    return this.http.get<PontoDado[]>(`${this.baseLoja}/visitantes`, { params: { granularidade } });
+  }
+
+  lojaVisitasProduto(): Observable<PontoDado[]> {
+    return this.http.get<PontoDado[]>(`${this.baseLoja}/visitas-produto`);
   }
 }

@@ -16,4 +16,15 @@ interface LojaDashboard
     public function produtosMaisVendidos(int $lojaId, int $limite = 10): Collection;
 
     public function produtosMaisVisitados(int $lojaId, int $limite = 10): Collection;
+
+    /** @return array<int, array{label: string, valor: float}> */
+    public function lucroPorPeriodo(int $lojaId, string $granularidade = 'dia'): array;
+
+    /** @return array<int, array{label: string, valor: float}> */
+    public function visitantesPorPeriodo(int $lojaId, string $granularidade = 'dia'): array;
+
+    /** @return array<int, array{id: int, nome: string, visitas: int}> */
+    public function visitasPorProduto(int $lojaId, int $limite = 12): array;
+
+    public function tabelaDeVendas(int $lojaId, int $limite = 40): BaseCollection;
 }

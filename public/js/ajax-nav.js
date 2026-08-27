@@ -91,7 +91,8 @@
       }
     });
 
-    if (document.querySelector('app-root') && typeof window.__bootstrapAdminCharts === 'function') {
+    // as duas raizes Angular: <app-root> no admin, <app-loja-root> na loja
+    if (document.querySelector('app-root, app-loja-root') && typeof window.__bootstrapAdminCharts === 'function') {
       window.__bootstrapAdminCharts();
     }
 
@@ -109,7 +110,7 @@
       return false;
     }
 
-    if (document.querySelector('app-root') && window.__ngAppRef) {
+    if (document.querySelector('app-root, app-loja-root') && window.__ngAppRef) {
       window.__ngAppRef.destroy();
       window.__ngAppRef = undefined;
     }

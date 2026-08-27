@@ -53,6 +53,20 @@ class PaginaAnalise implements Analise
         return $order;
     }
 
+    /**
+     * A loja aceita o pedido e assume a separacao.
+     *
+     * Nao mexe em status_pagamento: 'aceitar' aqui e a loja assumindo o
+     * pedido, nao um analista aprovando o dinheiro -- sao decisoes de pessoas
+     * diferentes, em momentos diferentes.
+     */
+    public function aceitarNaLoja(Order $order): Order
+    {
+        $order->update(['status_separacao' => 'aceito']);
+
+        return $order;
+    }
+
     public function separar(Order $order): Order
     {
         $order->update(['status_separacao' => 'separado']);

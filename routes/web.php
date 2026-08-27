@@ -6,6 +6,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LojaDashboardController;
+use App\Http\Controllers\LojaPainelController;
 use App\Http\Controllers\LojaVitrineController;
 use App\Http\Controllers\LojistaAuthController;
 use App\Http\Controllers\OrderController;
@@ -105,4 +106,26 @@ Route::middleware(['auth', 'lojista'])->prefix('loja')->name('loja.')->group(fun
 
     Route::get('/clientes', [LojaDashboardController::class, 'clientes'])->name('clientes');
     Route::get('/produtos', [LojaDashboardController::class, 'produtos'])->name('produtos');
+
+    // catalogo do lojista: incluir e remover as proprias pecas
+    Route::post('/produtos', [LojaPainelController::class, 'criarProduto'])->name('produtos.store');
+    Route::delete('/produtos/{product}', [LojaPainelController::class, 'removerProduto'])->name('produtos.destroy');
+
+    // carteira virtual
+    Route::get('/carteira', [LojaPainelController::class, 'carteira'])->name('carteira');
+    Route::post('/carteira/sacar', [LojaPainelController::class, 'sacar'])->name('carteira.sacar');
+
+    // esteira de pedidos: cada acao empurra o pedido para a coluna seguinte
+    Route::get('/esteira', [LojaPainelController::class, 'esteira'])->name('esteira');
+    Route::post('/esteira/{order}/aceitar', [LojaPainelController::class, 'aceitar'])->name('esteira.aceitar');
+    Route::post('/esteira/{order}/separar', [LojaPainelController::class, 'separar'])->name('esteira.separar');
+    Route::post('/esteira/{order}/despachar', [LojaPainelController::class, 'despachar'])->name('esteira.despachar');
+    Route::post('/esteira/{order}/entregar', [LojaPainelController::class, 'entregar'])->name('esteira.entregar');
+
+    Route::get('/documentos', [LojaPainelController::class, 'documentos'])->name('documentos');
+
+    // dados dos graficos, consumidos pelo app Angular
+    Route::get('/graficos/lucro', [LojaPainelController::class, 'graficoLucro'])->name('graficos.lucro');
+    Route::get('/graficos/visitantes', [LojaPainelController::class, 'graficoVisitantes'])->name('graficos.visitantes');
+    Route::get('/graficos/visitas-produto', [LojaPainelController::class, 'graficoVisitasProduto'])->name('graficos.visitas-produto');
 });

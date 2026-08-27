@@ -10,7 +10,7 @@ import { DashboardDataService, PontoDado } from '../../services/dashboard-data.s
 })
 export class BarChart implements OnInit, OnDestroy {
   @Input() titulo = '';
-  @Input() fonte: 'volume' | 'categoria' = 'volume';
+  @Input() fonte: 'volume' | 'categoria' | 'loja-visitas-produto' = 'volume';
   @Input() horizontal = false;
   @Input() cor = '#f2f0ec';
 
@@ -36,7 +36,12 @@ export class BarChart implements OnInit, OnDestroy {
   private carregar(silencioso = false): void {
     if (!silencioso) this.carregando.set(true);
 
-    const fonteObs = this.fonte === 'volume' ? this.dados.volumeCompras() : this.dados.vendasPorCategoria();
+    const fontes = {
+      'volume': () => this.dados.volumeCompras(),
+      'categoria': () => this.dados.vendasPorCategoria(),
+      'loja-visitas-produto': () => this.dados.lojaVisitasProduto(),
+    };
+    const fonteObs = fontes[this.fonte]();
 
     fonteObs.subscribe({
       next: (pontos) => {

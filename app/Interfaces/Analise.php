@@ -15,6 +15,8 @@ interface Analise
 
     public function escolherEntrega(Order $order, bool $entregaPropria, ?int $transportadoraId = null, ?int $motoristaId = null): Order;
 
+    public function aceitarNaLoja(Order $order): Order;
+
     public function separar(Order $order): Order;
 
     public function enviar(Order $order): Order;

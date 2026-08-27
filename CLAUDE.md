@@ -360,10 +360,48 @@ curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8000/admin      # 302
 Para um fluxo autenticado de verdade: pegue o `_token` de `/login`, poste com
 cookie jar e então chame `/admin/stats`, que devolve JSON com os números reais.
 
-## Gráficos do admin (Angular)
+## Painel do lojista
 
-`admin-charts/` é um app Angular 22 + Chart.js que consome
-`/admin/graficos/{acessos,receita,volume-compras,satisfacao,vendas-categoria}`.
+Menos poder que o admin, mas painel próprio em `/loja`, com sidebar
+(`layouts.loja`). Além das telas de leitura que já existiam:
+
+- **Carteira** (`App\Support\CarteiraDaLoja`) — no canto superior direito de
+  toda tela do painel. **Não há coluna de saldo**: disponível e a receber são
+  derivados dos pedidos e dos saques a cada consulta, porque um número gravado
+  divergiria das vendas e ninguém saberia qual dos dois está certo. Só a tabela
+  `saques` é persistida.
+- **Esteira de pedidos** (`/loja/esteira`) — quatro colunas, e cada ação empurra
+  o pedido para a seguinte: a aprovar → em separação → pronto para o transporte
+  → a caminho.
+- **Documentos** (`App\Support\DocumentoDePedido`) — três JSON por pedido, um em
+  cada momento em que alguém assume a mercadoria (aceite, transporte, entrega),
+  em `storage/app/private/documentos-lojas/{loja_id}/pedidos/{order_id}/`.
+- **Catálogo** — o lojista inclui e remove as próprias peças. Peça já vendida
+  não é removível: os pedidos antigos apontam para ela.
+
+### As regras de dinheiro, e de onde saem
+
+Comissão da plataforma: **10%**, em `CarteiraDaLoja::COMISSAO_PADRAO`.
+Saldo **a receber** é o pedido pago que ainda não chegou ao cliente; saldo
+**disponível** é o pedido entregue, menos o que já foi sacado. O frete nunca
+entra — ele paga a entrega, não a loja.
+
+`App\Classes\Plano` prevê comissão por plano, mas a tabela `planos` **não
+existe** e nenhuma loja tem `plano_id`; por isso a taxa é uma constante.
+
+`status_separacao` ganhou o valor `aceito` (a loja assumiu o pedido, ainda não
+separou). Para o cliente ele cai na mesma etapa de `separado` — ver
+`Order::etapaAcompanhamento()`.
+
+## Gráficos (Angular)
+
+`admin-charts/` é um app Angular 22 + Chart.js que serve **os dois painéis** (o
+nome da pasta ficou do tempo em que só havia o do admin). Um único bundle:
+`main.ts` monta `<app-root>` no admin e `<app-loja-root>` na loja, conforme o
+seletor presente na página. Consome
+`/admin/graficos/{acessos,receita,volume-compras,satisfacao,vendas-categoria}`
+e `/loja/graficos/{lucro,visitantes,visitas-produto}`, que devolvem o mesmo
+`{label, valor}`.
 O bundle compilado está **versionado** em `public/admin-charts/browser/`, então
 rodar o sistema não exige Node.
 

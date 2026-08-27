@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Classes\Loja;
 use App\Classes\Transportadora;
 use App\Models\Order;
+use App\Models\Product;
 use App\Pages\PaginaAnalise;
 use App\Pages\PaginaLojaDashboard;
 use App\Pages\PaginaTransportadora;
+use App\Support\CarteiraDaLoja;
 use App\Support\ImagemDePerfil;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -63,11 +65,15 @@ class LojaDashboardController extends Controller
 
         return view('loja.dashboard', [
             'loja' => $loja,
-            'vendasPorDia' => $painel->vendasPorDia($loja->id),
-            'visitasPorDia' => $painel->visitasPorDia($loja->id),
-            'produtosMaisVendidos' => $painel->produtosMaisVendidos($loja->id, 5),
-            'produtosMaisVisitados' => $painel->produtosMaisVisitados($loja->id, 5),
             'totalVisitantes' => $painel->visitantes($loja->id)->count(),
+            'totalProdutos' => $loja->produtos()->count(),
+            'pedidosNoFluxo' => Order::whereHas('items.product', fn ($q) => $q->where('loja_id', $loja->id))
+                ->whereIn('status_pagamento', ['aprovado', 'aguardando_analise'])
+                ->where('status', '!=', 'cancelado')
+                ->where(fn ($q) => $q->whereNull('status_separacao')->orWhere('status_separacao', '!=', 'entregue'))
+                ->count(),
+            'carteira' => CarteiraDaLoja::resumo($loja),
+            'vendas' => $painel->tabelaDeVendas($loja->id, 25),
         ]);
     }
 
@@ -258,9 +264,15 @@ class LojaDashboardController extends Controller
 
         return view('loja.produtos', [
             'loja' => $loja,
-            'produtos' => $loja->produtos()->with('variants')->get(),
+            'produtos' => $loja->produtos()->with('variants')->latest()->get(),
             'maisVendidos' => $painel->produtosMaisVendidos($loja->id, 10),
-            'maisVisitados' => $painel->produtosMaisVisitados($loja->id, 10),
+            'visitasPorProduto' => $painel->visitasPorProduto($loja->id, 10),
+            // sugestoes para o campo de categoria do cadastro: as que a loja ja
+            // usa, para o catalogo nao virar um punhado de grafias diferentes
+            'categorias' => Product::whereNotNull('categoria')
+                ->distinct()
+                ->orderBy('categoria')
+                ->pluck('categoria'),
         ]);
     }
 }

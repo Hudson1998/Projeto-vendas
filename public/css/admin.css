@@ -543,3 +543,287 @@
     grid-template-columns: 90px 1fr 36px;
   }
 }
+
+/* ===== Painel do lojista: carteira, esteira, documentos ===== */
+
+/* carteira no canto superior direito da topbar */
+.carteira-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  padding: 8px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  color: var(--muted);
+  text-decoration: none;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+.carteira-chip:hover {
+  border-color: var(--line);
+  color: var(--fg);
+}
+.carteira-chip__valores {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.carteira-chip__disponivel {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--fg);
+}
+.carteira-chip__receber {
+  font-size: 11px;
+  color: var(--muted-dim);
+}
+
+.stat-tile--destaque {
+  border-color: var(--line);
+}
+.stat-tile__hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 300;
+  color: var(--muted-dim);
+}
+.admin-panel--largo {
+  grid-column: 1 / -1;
+}
+.admin-panel__ajuda,
+.carteira-aviso {
+  margin: 12px 0 0;
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 1.6;
+  color: var(--muted-dim);
+}
+.admin-table__total td {
+  border-top: 1px solid var(--border-strong);
+  font-weight: 500;
+  color: var(--fg);
+}
+.produto-celula {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.produto-celula__foto {
+  width: 34px;
+  height: 34px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+/* ----- esteira de pedidos ----- */
+.esteira {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(220px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.esteira__coluna {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+.esteira__cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.esteira__titulo {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg);
+}
+.esteira__contador {
+  min-width: 22px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--border);
+  font-size: 11px;
+  text-align: center;
+  color: var(--muted);
+}
+.esteira__ajuda {
+  margin: 6px 0 14px;
+  font-size: 11px;
+  font-weight: 300;
+  line-height: 1.5;
+  color: var(--muted-dim);
+}
+.esteira__cartoes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.esteira__vazio {
+  margin: 0;
+  padding: 18px 0;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--muted-dim);
+}
+.esteira-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+.esteira-card__topo {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--muted-dim);
+}
+.esteira-card__id {
+  font-weight: 500;
+  color: var(--fg);
+}
+.esteira-card__cliente {
+  display: block;
+  margin: 6px 0 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.esteira-card__itens {
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.esteira-card__variante {
+  color: var(--muted-dim);
+}
+.esteira-card__rodape {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted-dim);
+}
+.esteira-card__total {
+  font-weight: 500;
+  color: var(--fg);
+}
+.esteira-card__alerta {
+  display: block;
+  margin-top: 10px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(107, 90, 46, 0.2);
+  font-size: 11px;
+  color: #e6d3a3;
+}
+.esteira-card__acao {
+  margin-top: 12px;
+  padding: 9px 12px;
+  font-size: 11px;
+}
+.esteira-card__documento {
+  display: block;
+  margin-top: 8px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--muted-dim);
+}
+
+/* ----- documentos ----- */
+.documentos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+.documento {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--line);
+  border-radius: 10px;
+  padding: 18px;
+}
+.documento[data-etapa="1-aceite"] { border-left-color: #8fc79a; }
+.documento[data-etapa="2-transporte"] { border-left-color: #e0b84a; }
+.documento[data-etapa="3-entrega"] { border-left-color: #7fa8d8; }
+.documento__topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.documento__etapa {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg);
+}
+.documento__pedido {
+  font-size: 11px;
+  color: var(--muted-dim);
+}
+.documento__campos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 0;
+}
+.documento__campo--largo {
+  grid-column: 1 / -1;
+}
+.documento__campos dt {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-dim);
+}
+.documento__campos dd {
+  margin: 3px 0 0;
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--muted);
+}
+.documento__bruto {
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--muted-dim);
+}
+.documento__bruto summary {
+  cursor: pointer;
+}
+.documento__bruto pre {
+  max-height: 240px;
+  overflow: auto;
+  margin: 10px 0 0;
+  padding: 12px;
+  background: var(--bg);
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+@media (max-width: 1100px) {
+  .esteira {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .esteira {
+    grid-template-columns: 1fr;
+  }
+  .carteira-chip__receber {
+    display: none;
+  }
+}

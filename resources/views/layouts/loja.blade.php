@@ -29,6 +29,18 @@
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="3" width="7" height="5" rx="1"></rect><rect x="14" y="12" width="7" height="9" rx="1"></rect><rect x="3" y="16" width="7" height="5" rx="1"></rect></svg>
         Dashboard
       </a>
+      <a href="{{ route('loja.esteira') }}" class="admin-sidenav__link @if(request()->routeIs('loja.esteira')) is-active @endif">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="5" height="16" rx="1"></rect><rect x="10" y="4" width="5" height="11" rx="1"></rect><rect x="17" y="4" width="4" height="7" rx="1"></rect></svg>
+        Esteira de pedidos
+      </a>
+      <a href="{{ route('loja.carteira') }}" class="admin-sidenav__link @if(request()->routeIs('loja.carteira')) is-active @endif">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v2"></path><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5a2 2 0 0 1-2-2z"></path></svg>
+        Carteira
+      </a>
+      <a href="{{ route('loja.documentos') }}" class="admin-sidenav__link @if(request()->routeIs('loja.documentos')) is-active @endif">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path><path d="M14 2v6h6"></path></svg>
+        Documentos
+      </a>
       <a href="{{ route('loja.pedidos') }}" class="admin-sidenav__link @if(request()->routeIs('loja.pedidos')) is-active @endif">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path><path d="M14 2v6h6M9 13h6M9 17h6"></path></svg>
         Pedidos
@@ -66,6 +78,17 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
       </button>
       <span class="admin-topbar__title">@yield('title', 'Painel da Loja')</span>
+
+      {{-- carteira no canto superior direito, visivel em todas as telas do
+           painel: e o numero que o lojista mais quer olhar --}}
+      @php($carteiraTopo = \App\Support\CarteiraDaLoja::resumo(auth()->user()->loja))
+      <a href="{{ route('loja.carteira') }}" class="carteira-chip" title="Abrir a carteira">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v2"></path><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5a2 2 0 0 1-2-2z"></path><circle cx="17" cy="14" r="1.3" fill="currentColor" stroke="none"></circle></svg>
+        <span class="carteira-chip__valores">
+          <span class="carteira-chip__disponivel">R$ {{ number_format($carteiraTopo['disponivel'], 2, ',', '.') }}</span>
+          <span class="carteira-chip__receber">a receber R$ {{ number_format($carteiraTopo['a_receber'], 2, ',', '.') }}</span>
+        </span>
+      </a>
     </header>
 
     <main class="admin-main">

@@ -116,7 +116,7 @@ class Order extends Model
         return match ($this->status_separacao) {
             'entregue' => 4,
             'enviado' => 3,
-            'embalado', 'separado' => 2,
+            'embalado', 'separado', 'aceito' => 2,
             default => $this->status_pagamento === 'aprovado' ? 1 : 0,
         };
     }

@@ -10,7 +10,7 @@ import { DashboardDataService, Granularidade, PontoDado } from '../../services/d
 })
 export class TimeSeriesChart implements OnInit, OnDestroy {
   @Input() titulo = '';
-  @Input() tipo: 'acessos' | 'receita' = 'acessos';
+  @Input() tipo: 'acessos' | 'receita' | 'loja-lucro' | 'loja-visitantes' = 'acessos';
   @Input() cor = '#f2f0ec';
 
   @ViewChild('canvas') canvasRef!: ElementRef<HTMLCanvasElement>;
@@ -42,7 +42,16 @@ export class TimeSeriesChart implements OnInit, OnDestroy {
   private carregar(silencioso = false): void {
     if (!silencioso) this.carregando.set(true);
 
-    const fonte = this.tipo === 'acessos' ? this.dados.acessos(this.granularidade()) : this.dados.receita(this.granularidade());
+    // cada tipo aponta para um endpoint; os do painel da loja devolvem o
+    // mesmo {label, valor}, entao o desenho nao muda
+    const g = this.granularidade();
+    const fontes = {
+      'acessos': () => this.dados.acessos(g),
+      'receita': () => this.dados.receita(g),
+      'loja-lucro': () => this.dados.lojaLucro(g),
+      'loja-visitantes': () => this.dados.lojaVisitantes(g),
+    };
+    const fonte = fontes[this.tipo]();
 
     fonte.subscribe({
       next: (pontos) => {

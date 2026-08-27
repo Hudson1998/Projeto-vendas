@@ -1,0 +1,20 @@
+<app-time-series-chart
+  titulo="Lucro da loja"
+  tipo="loja-lucro"
+  cor="#8fc79a"
+></app-time-series-chart>
+
+<app-time-series-chart
+  titulo="Visitantes da loja"
+  tipo="loja-visitantes"
+  cor="#f2f0ec"
+></app-time-series-chart>
+
+<div class="charts-grid">
+  <app-bar-chart
+    titulo="Visitas por produto"
+    fonte="loja-visitas-produto"
+    [horizontal]="true"
+    cor="#e0b84a"
+  ></app-bar-chart>
+</div>
