@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="{{ asset_v('css/styles.css') }}">
 <link rel="stylesheet" href="{{ asset_v('css/admin.css') }}">
 </head>
-<body class="admin-body">
+<body class="admin-body loja-body">
 
 @include('partials.page-loader')
 
@@ -23,6 +23,17 @@
       <span class="brand__name">HR</span>
       <span class="admin-brand__label">Painel da Loja</span>
     </a>
+
+    {{-- identificacao do papel: e a primeira coisa lida ao entrar no painel --}}
+    <div class="loja-selo">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 9h16l-1.4-4.2A1 1 0 0 0 17.6 4H6.4a1 1 0 0 0-1 .8L4 9z"></path><path d="M5 9v10h14V9"></path></svg>
+      Lojista
+    </div>
+
+    <div class="loja-identidade">
+      <span class="loja-identidade__nome">{{ auth()->user()->loja->nomeExibicao() }}</span>
+      <span class="loja-identidade__local">{{ collect([auth()->user()->loja->envio_cidade, auth()->user()->loja->envio_estado])->filter()->implode(" · ") ?: "Endereço de envio não cadastrado" }}</span>
+    </div>
 
     <nav class="admin-sidenav">
       <a href="{{ route('loja.dashboard') }}" class="admin-sidenav__link @if(request()->routeIs('loja.dashboard')) is-active @endif">
@@ -78,10 +89,21 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
       </button>
       <span class="admin-topbar__title">@yield('title', 'Painel da Loja')</span>
+    </header>
 
-      {{-- carteira no canto superior direito, visivel em todas as telas do
-           painel: e o numero que o lojista mais quer olhar --}}
-      @php($carteiraTopo = \App\Support\CarteiraDaLoja::resumo(auth()->user()->loja))
+    {{-- Faixa do papel: diz de quem e a area e leva a carteira.
+
+         Fica FORA da .admin-topbar de proposito -- aquela e display:none acima
+         de 900px, entao a carteira que morava la sumia no desktop e so aparecia
+         no celular. Esta faixa aparece nos dois. --}}
+    @php($carteiraTopo = \App\Support\CarteiraDaLoja::resumo(auth()->user()->loja))
+    <div class="loja-faixa">
+      <span class="loja-faixa__papel">
+        <span class="loja-faixa__ponto"></span>
+        Área do lojista
+      </span>
+      <span class="loja-faixa__contexto">— você está gerenciando {{ auth()->user()->loja->nomeExibicao() }}</span>
+
       <a href="{{ route('loja.carteira') }}" class="carteira-chip" title="Abrir a carteira">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v2"></path><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H5a2 2 0 0 1-2-2z"></path><circle cx="17" cy="14" r="1.3" fill="currentColor" stroke="none"></circle></svg>
         <span class="carteira-chip__valores">
@@ -89,7 +111,7 @@
           <span class="carteira-chip__receber">a receber R$ {{ number_format($carteiraTopo['a_receber'], 2, ',', '.') }}</span>
         </span>
       </a>
-    </header>
+    </div>
 
     <main class="admin-main">
       @yield('content')

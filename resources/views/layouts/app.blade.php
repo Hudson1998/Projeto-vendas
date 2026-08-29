@@ -71,6 +71,10 @@
       @auth
         @if (auth()->user()->isAdmin())
           <a href="{{ route('admin.dashboard') }}" class="account-link header-account__item--desktop">Painel Admin</a>
+        @elseif (auth()->user()->loja)
+          {{-- o caminho de volta ao painel: sem isto o lojista que clica em
+               "Ver loja" so retorna digitando /loja na barra do navegador --}}
+          <a href="{{ route('loja.dashboard') }}" class="account-link account-link--lojista header-account__item--desktop">Painel da Loja</a>
         @endif
 
         <a href="{{ route('cart.index') }}" class="cart-icon" title="Carrinho">
@@ -149,6 +153,8 @@
       <a href="{{ route('home') }}" class="mobile-menu__item">Início</a>
       @if (auth()->user()->isAdmin())
         <a href="{{ route('admin.dashboard') }}" class="mobile-menu__item">Painel Admin</a>
+      @elseif (auth()->user()->loja)
+        <a href="{{ route('loja.dashboard') }}" class="mobile-menu__item">Painel da Loja</a>
       @endif
       <a href="{{ route('profile.edit') }}" class="mobile-menu__item">Configurações</a>
       <a href="{{ route('orders.tracking') }}" class="mobile-menu__item">Acompanhar pedido</a>

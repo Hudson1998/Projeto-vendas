@@ -33,8 +33,15 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
+        // cada papel entra na propria casa. O lojista caia na vitrine, sem
+        // sidebar e sem nenhum link visivel para /loja -- so chegava ao painel
+        // quem digitasse a URL na mao.
         if (Auth::user()->isAdmin()) {
             return redirect()->route('admin.dashboard');
+        }
+
+        if (Auth::user()->loja) {
+            return redirect()->route('loja.dashboard');
         }
 
         return redirect()->intended(route('home'));

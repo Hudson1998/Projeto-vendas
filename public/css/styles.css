@@ -3099,3 +3099,13 @@ footer a:hover {
     text-align: center;
   }
 }
+/* o link do lojista na vitrine carrega a cor do papel, para ele reconhecer
+   de relance que aquele e o caminho de volta ao painel dele */
+.account-link--lojista {
+  color: #c98f4f;
+  border-color: rgba(201, 143, 79, 0.4);
+}
+.account-link--lojista:hover {
+  color: #e0b98a;
+  border-color: #c98f4f;
+}
