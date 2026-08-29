@@ -3241,3 +3241,9 @@ footer a:hover {
   font-size: 11px;
   color: var(--muted);
 }
+.google-pendente p {
+  margin: 0 0 6px;
+}
+.google-pendente p:last-child {
+  margin-bottom: 0;
+}

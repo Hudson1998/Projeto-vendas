@@ -17,7 +17,12 @@ return [
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('GOOGLE_REDIRECT_URI', env('APP_URL').'/auth/google/callback'),
+        // vazio de proposito: sem esta variavel a ContaGoogle monta a URL a
+        // partir do endereco que o navegador realmente usou. Amarrar em
+        // APP_URL aqui daria redirect_uri_mismatch sempre que os dois
+        // divergissem -- e no Codespace eles divergem (APP_URL diz
+        // localhost:8000, a loja atende na 80 por um dominio *.app.github.dev).
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
 
     'ses' => [

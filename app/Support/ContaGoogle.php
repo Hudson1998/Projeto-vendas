@@ -29,6 +29,22 @@ class ContaGoogle
     /** Chave da sessao onde o state fica guardado entre o redirect e a volta. */
     public const CHAVE_STATE = 'google_oauth_state';
 
+    /**
+     * O redirect_uri, que precisa ser IDENTICO nas tres pontas: na URL de
+     * autorizacao, na troca do codigo, e no que esta cadastrado no Google.
+     *
+     * Sem GOOGLE_REDIRECT_URI no .env ele sai do endereco que o navegador
+     * usou de fato, nao de APP_URL. No Codespace os dois divergem -- APP_URL
+     * diz localhost:8000 e a loja atende na 80, por um dominio
+     * *.app.github.dev -- e o Google recusaria com redirect_uri_mismatch.
+     * O trustProxies do bootstrap/app.php e o que faz url() enxergar o
+     * dominio e o https certos atras do proxy.
+     */
+    public static function urlDeCallback(): string
+    {
+        return config('services.google.redirect') ?: url('/auth/google/callback');
+    }
+
     /** Ha credenciais para conversar com o Google? */
     public static function configurado(): bool
     {
@@ -46,7 +62,7 @@ class ContaGoogle
     {
         return self::AUTORIZACAO.'?'.http_build_query([
             'client_id' => config('services.google.client_id'),
-            'redirect_uri' => config('services.google.redirect'),
+            'redirect_uri' => self::urlDeCallback(),
             'response_type' => 'code',
             'scope' => 'openid email profile',
             'state' => $state,
@@ -69,7 +85,7 @@ class ContaGoogle
             'code' => $codigo,
             'client_id' => config('services.google.client_id'),
             'client_secret' => config('services.google.client_secret'),
-            'redirect_uri' => config('services.google.redirect'),
+            'redirect_uri' => self::urlDeCallback(),
             'grant_type' => 'authorization_code',
         ]);
 

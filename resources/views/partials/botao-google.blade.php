@@ -21,10 +21,21 @@
   </a>
 
   @unless ($googleConfigurado)
-    <p class="google-pendente">
-      Falta configurar <code>GOOGLE_CLIENT_ID</code> e <code>GOOGLE_CLIENT_SECRET</code>
-      no <code>.env</code>. Este aviso só aparece em desenvolvimento.
-    </p>
+    {{-- mostra o redirect_uri calculado a partir do endereco que o navegador
+         usou: e exatamente o que precisa estar autorizado no Google, e errar
+         esse valor e o motivo mais comum de redirect_uri_mismatch --}}
+    <div class="google-pendente">
+      <p>
+        Falta preencher <code>GOOGLE_CLIENT_ID</code> e <code>GOOGLE_CLIENT_SECRET</code>
+        no <code>.env</code>. Crie em Google Cloud Console → Credenciais → ID do cliente
+        OAuth, tipo “Aplicativo da Web”.
+      </p>
+      <p>
+        Autorize este URI de redirecionamento, exatamente assim:<br>
+        <code>{{ App\Support\ContaGoogle::urlDeCallback() }}</code>
+      </p>
+      <p>Este aviso só aparece em desenvolvimento.</p>
+    </div>
   @endunless
 
   <div class="auth-separador"><span>{{ $separador }}</span></div>
