@@ -99,6 +99,25 @@
     document.dispatchEvent(new CustomEvent('ajaxpage:loaded'));
   }
 
+  /**
+   * O que identifica o layout de uma pagina: os <script> do rodape.
+   *
+   * Conta so o que esta FORA do #ajax-content e do #ajax-scripts -- esses dois
+   * mudam de pagina para pagina DENTRO do mesmo layout (o bundle do Angular no
+   * dashboard, o avatar-preview no perfil) e fariam toda navegacao parecer uma
+   * troca de layout.
+   */
+  function assinaturaDoLayout(documento) {
+    var srcs = [];
+
+    Array.prototype.forEach.call(documento.querySelectorAll('script[src]'), function (script) {
+      if (script.closest('#' + contentId + ', #ajax-scripts')) return;
+      srcs.push((script.getAttribute('src') || '').split('?')[0]);
+    });
+
+    return srcs.sort().join('|');
+  }
+
   function swapContent(html, finalUrl) {
     var parser = new DOMParser();
     var doc = parser.parseFromString(html, 'text/html');
@@ -110,17 +129,31 @@
       return false;
     }
 
+    /* Troca de layout vai pelo navegador, nao pelo AJAX.
+       A troca substitui o #ajax-content e mais nada -- mas quando o destino
+       usa outro layout (vitrine -> /loja, painel -> vitrine) o que fica de
+       fora e justamente o que muda: os <script> do rodape. O conteudo do
+       painel entrava e abria sem admin-nav.js nem loja-dashboard.js, ainda
+       carregando o app.js da vitrine. Carga normal resolve de uma vez. */
+    if (assinaturaDoLayout(doc) !== assinaturaDoLayout(document)) {
+      window.location.href = finalUrl;
+      return false;
+    }
+
     if (document.querySelector('app-root, app-loja-root') && window.__ngAppRef) {
       window.__ngAppRef.destroy();
       window.__ngAppRef = undefined;
     }
 
-    /* O #confirm-modal mora dentro do #ajax-content e some junto com a troca,
-       mas a trava de rolagem que ele acende (body.modal-open -> overflow:
-       hidden) fica no <body> e sobrevive. Navegar com o modal aberto -- que e
-       exatamente o que "Pagar agora" faz -- deixava a pagina de destino sem
-       barra de rolagem, presa, ate um F5. Solta a trava junto com o modal. */
-    document.body.classList.remove('modal-open');
+    /* A classe do <body> vem do layout, fora do #ajax-content: copiada da
+       pagina que chegou, e nao herdada da anterior. Os tokens do painel do
+       lojista moram em .loja-body -- sem a classe, selo, faixa e trilho abrem
+       sem cor.
+
+       Copiar tambem solta a trava de rolagem do modal (body.modal-open): o
+       #confirm-modal some com a troca, mas a classe ficava no <body> e a
+       pagina de destino abria presa, sem barra de rolagem, ate um F5. */
+    document.body.className = doc.body ? doc.body.className : '';
 
     // os inicializadores da pagina que esta saindo morrem com ela; os scripts
     // da pagina nova registram os seus logo abaixo, dentro do runScripts
