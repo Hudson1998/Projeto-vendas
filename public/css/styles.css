@@ -3109,3 +3109,119 @@ footer a:hover {
   color: #e0b98a;
   border-color: #c98f4f;
 }
+
+/* ===== Cadastro: campo obrigatorio esquecido, forca da senha, Google ===== */
+
+/* o campo em falta se explica sozinho: borda vermelha e a razao logo abaixo */
+.field input.is-invalid,
+.field select.is-invalid,
+.field textarea.is-invalid {
+  border-color: #a85454;
+  background: rgba(168, 84, 84, 0.06);
+}
+.field input.is-invalid:focus,
+.field select.is-invalid:focus,
+.field textarea.is-invalid:focus {
+  border-color: #cf8b8b;
+}
+.field__erro {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 1.5;
+  color: #e0a3a3;
+}
+.field__erro[hidden] {
+  display: none;
+}
+
+/* as duas regras da senha, conferidas enquanto a pessoa digita */
+.senha-forca {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.senha-forca[hidden] {
+  display: none;
+}
+.senha-forca__item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 11px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  color: var(--muted-dim);
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+/* o marcador e desenhado no ::before para o texto nao mudar de largura ao virar */
+.senha-forca__item::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  flex-shrink: 0;
+}
+.senha-forca__item.is-ok {
+  color: #8fbf9a;
+  border-color: rgba(143, 191, 154, 0.45);
+}
+.senha-forca__item.is-ok::before {
+  background: #8fbf9a;
+  border-color: #8fbf9a;
+}
+
+/* entrar com o Google: o botao usa a marca deles, nao a nossa */
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 20px;
+  margin-bottom: 4px;
+  background: #ffffff;
+  border: 1px solid #dadce0;
+  border-radius: 2px;
+  font-family: "Jost", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: #3c4043;
+  text-decoration: none;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+.btn-google:hover {
+  background: #f7f8f8;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  color: #3c4043;
+}
+.btn-google svg {
+  flex-shrink: 0;
+}
+
+/* "ou preencha seus dados", com um filete de cada lado */
+.auth-separador {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 24px 0 20px;
+  font-size: 11px;
+  font-weight: 300;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-dim);
+}
+.auth-separador::before,
+.auth-separador::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}

@@ -34,6 +34,11 @@ Route::middleware('guest')->group(function () {
     Route::post('/cadastro', [AuthController::class, 'register']);
     Route::get('/cadastro/lojista', [LojistaAuthController::class, 'showRegister'])->name('register.lojista');
     Route::post('/cadastro/lojista', [LojistaAuthController::class, 'register']);
+
+    // entrada pela conta Google. O redirect_uri cadastrado no Google Cloud
+    // Console tem de ser exatamente o da callback abaixo.
+    Route::get('/auth/google', [AuthController::class, 'redirectGoogle'])->name('google.redirect');
+    Route::get('/auth/google/callback', [AuthController::class, 'callbackGoogle'])->name('google.callback');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');

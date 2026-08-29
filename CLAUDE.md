@@ -190,6 +190,43 @@ Não existe tabela de transações: o histórico de pagamento são as colunas
 em `orders`; a entrega são `status_separacao`, `entrega_propria`,
 `transportadora_id` e `motorista_id` na mesma tabela.
 
+## Cadastro e entrada
+
+### A senha do cliente: 10 caracteres e um símbolo
+
+`AuthController::register` — `min:10` mais `regex:/[^\p{L}\p{N}]/u`. Escrito em
+regras soltas e não com `Password::min(10)->symbols()` porque a regra do Laravel
+emite a própria mensagem, **em inglês**, e o projeto não tem arquivo de tradução
+— aqui as duas mensagens são nossas. O cadastro de **lojista** segue em `min:8`;
+mudar aquele é outra decisão.
+
+### Campo obrigatório esquecido
+
+Os campos de endereço **não têm `name`** — o `cep.js` junta todos no hidden
+`#endereco`, o único que chega ao servidor. Então o servidor só sabe reclamar de
+"endereco", nunca de "rua" ou "bairro": quem aponta o campo exato é o
+`public/js/cadastro-validacao.js`, lendo o `data-obrigatorio` de cada input. O
+formulário leva `novalidate` para essa checagem assumir o lugar da bolha nativa.
+
+Duas coisas quebram em silêncio se esquecidas: o `<span class="field__erro">`
+precisa existir **sempre** (vazio e `hidden`), senão o validador do navegador
+não tem onde escrever a mensagem; e o vermelho é a classe `is-invalid` no input.
+
+### Entrada pela conta Google
+
+`App\Support\ContaGoogle` faz o OAuth 2.0 na mão, com o `Http::` do Laravel —
+**sem Socialite**. Um pacote novo exigiria `composer install` a cada deploy, e o
+Codespace só puxa o código (`docker/auto-pull.sh`): a loja subiria com "class
+not found".
+
+Sem `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` no `.env` o botão **não aparece**
+em lugar nenhum (`ContaGoogle::configurado()`). Não há simulação aqui, ao
+contrário do gateway de pagamento: login é fronteira de confiança, e um "Google
+de mentira" que aceitasse qualquer e-mail seria uma porta aberta.
+
+`users.google_id` guarda o `sub` do token, não o e-mail — que a pessoa troca. E
+`users.password` virou nullable: quem entrou pelo Google nunca escolheu uma.
+
 ## Uploads
 
 Fotos de produto, de perfil e logotipos vão para **`public/uploads`**, e o

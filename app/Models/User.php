@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Classes\Loja;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -17,10 +16,12 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'google_id',
         'password',
         'role',
         'endereco',
         'foto',
+        'email_verified_at',
     ];
 
     protected $hidden = [
