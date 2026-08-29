@@ -3,14 +3,17 @@
 @section('title', 'Criar conta · HR Moda Online')
 
 @section('content')
-@php $jaEscolheuCliente = $errors->any() || old('name'); @endphp
-<div class="modal-overlay @if(! $jaEscolheuCliente) is-open @endif" id="tipo-cadastro-modal" aria-hidden="{{ $jaEscolheuCliente ? 'true' : 'false' }}">
+{{-- O modal e a porta de entrada: escolher cliente ou lojista. Nasce fechado e
+     quem o abre e o JS, uma vez so por sessao do navegador -- ver o script no
+     fim do arquivo. Antes ele dependia de $errors->any(), e reaparecia a cada
+     tentativa que voltava com erro. --}}
+<div class="modal-overlay" id="tipo-cadastro-modal" aria-hidden="true">
   <div class="modal-box">
     <h2 class="modal-box__title">Como você quer se cadastrar?</h2>
     <p class="modal-box__text">Escolha uma opção para continuar.</p>
     <div class="modal-box__actions">
       <button type="button" class="btn btn-primary" id="btn-sou-cliente">Sou Cliente</button>
-      <a href="{{ route('register.lojista') }}" class="btn btn-outline">Sou Lojista</a>
+      <a href="{{ route('register.lojista') }}" class="btn btn-outline" id="btn-sou-lojista">Sou Lojista</a>
     </div>
   </div>
 </div>
@@ -29,19 +32,7 @@
     </div>
   @endif
 
-  @if (App\Support\ContaGoogle::configurado())
-    <a href="{{ route('google.redirect') }}" class="btn-google">
-      <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
-        <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.2-.4-4.7H24v8.9h11.8a10 10 0 0 1-4.4 6.6v5.5h7.1c4.2-3.8 6.6-9.5 6.6-16.3z"></path>
-        <path fill="#34A853" d="M24 46c6 0 11-2 14.6-5.2l-7.1-5.5a13.6 13.6 0 0 1-20.3-7.1H3.9v5.7A22 22 0 0 0 24 46z"></path>
-        <path fill="#FBBC05" d="M11.2 28.2a13.2 13.2 0 0 1 0-8.4v-5.7H3.9a22 22 0 0 0 0 19.8l7.3-5.7z"></path>
-        <path fill="#EA4335" d="M24 10.3c3.3 0 6.2 1.1 8.5 3.3l6.3-6.3A21 21 0 0 0 24 2 22 22 0 0 0 3.9 14.1l7.3 5.7A13.1 13.1 0 0 1 24 10.3z"></path>
-      </svg>
-      Continuar com o Google
-    </a>
-
-    <div class="auth-separador"><span>ou preencha seus dados</span></div>
-  @endif
+  @include('partials.botao-google')
 
   {{-- o mesmo aviso do servidor, preenchido pelo validador do navegador
        quando o envio e barrado antes de sair da pagina --}}
@@ -100,16 +91,42 @@
 @push('scripts')
 <script src="{{ asset_v('js/cadastro-validacao.js') }}"></script>
 <script>
-  (function () {
+  registerPageInit(function () {
     var modal = document.getElementById('tipo-cadastro-modal');
-    var btnCliente = document.getElementById('btn-sou-cliente');
-    if (btnCliente) {
-      btnCliente.addEventListener('click', function () {
-        modal.classList.remove('is-open');
-        modal.setAttribute('aria-hidden', 'true');
-      });
+    if (!modal) return;
+
+    // Uma vez por sessao do navegador. sessionStorage e nao uma variavel porque
+    // a escolha tem de sobreviver a um F5 e a uma volta do servidor com erro --
+    // era ai que o modal reaparecia, como se a pagina tivesse recomecado.
+    var CHAVE = 'cadastro-tipo-escolhido';
+    var jaEscolheu = false;
+
+    try {
+      jaEscolheu = sessionStorage.getItem(CHAVE) === '1';
+    } catch (e) {
+      // navegador com armazenamento bloqueado: mostra o modal, sem quebrar
     }
-  })();
+
+    function fechar() {
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('modal-open');
+      try { sessionStorage.setItem(CHAVE, '1'); } catch (e) { /* idem */ }
+    }
+
+    if (!jaEscolheu) {
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('modal-open');
+    }
+
+    var btnCliente = document.getElementById('btn-sou-cliente');
+    if (btnCliente) btnCliente.addEventListener('click', fechar);
+
+    // ir para o cadastro de lojista tambem conta como escolha feita
+    var btnLojista = document.getElementById('btn-sou-lojista');
+    if (btnLojista) btnLojista.addEventListener('click', fechar);
+  });
 </script>
 @endpush
 @endsection

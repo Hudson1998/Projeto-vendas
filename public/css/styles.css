@@ -3225,3 +3225,19 @@ footer a:hover {
   height: 1px;
   background: var(--border);
 }
+/* botao do Google ainda sem credenciais: so aparece em desenvolvimento */
+.btn-google.is-pendente {
+  opacity: 0.75;
+}
+.google-pendente {
+  margin: 8px 0 0;
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 1.6;
+  color: var(--muted-dim);
+}
+.google-pendente code {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 11px;
+  color: var(--muted);
+}

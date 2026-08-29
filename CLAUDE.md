@@ -153,6 +153,13 @@ globais ficam. Sem essa separação a lista crescia sem limite: cada visita ao
 `/carrinho` deixava mais uma cópia do inicializador dele, que seguia rodando e
 religando listeners em todas as páginas seguintes.
 
+**O `Accept: text/html` do fetch não é enfeite.** Com o `X-Requested-With`
+sozinho o Laravel entende que quem pede aceita qualquer coisa e responde
+**422 JSON** quando a validação falha. O `swapContent` não acha `#ajax-content`
+nesse JSON, cai na recarga total, e a página volta limpa: o erro some (nunca
+foi para a sessão) e o formulário reabre do zero. Era isso que fazia o
+`/cadastro` não avisar do e-mail repetido e reabrir o modal a cada tentativa.
+
 Corolário: **estado que vive fora do `#ajax-content` não é limpo pela troca.**
 `body.modal-open` (o `overflow: hidden` do modal de confirmação) é o caso real
 — o `#confirm-modal` some com a troca, mas a classe no `<body>` ficava, e a

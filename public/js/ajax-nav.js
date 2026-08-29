@@ -207,8 +207,15 @@
 
     showLoader();
 
+      /* Accept: text/html nao e enfeite.
+         Com o X-Requested-With sozinho o Laravel entende que quem pede aceita
+         qualquer coisa e responde 422 JSON quando a validacao falha. O
+         swapContent nao acha #ajax-content nesse JSON, cai na recarga total, e
+         a pagina volta limpa: o erro some (nunca foi para a sessao) e o
+         formulario reabre do zero. Pedindo HTML, o Laravel faz o redirect de
+         volta com os erros e a troca de conteudo os mostra no lugar certo. */
     fetch(url, {
-      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'text/html' },
       credentials: 'same-origin',
     })
       .then(function (res) {
@@ -265,9 +272,16 @@
     var formData = new FormData(form);
     var url = form.action;
 
+    /* Accept: text/html nao e enfeite.
+       Com o X-Requested-With sozinho o Laravel entende que quem pede aceita
+       qualquer coisa e responde 422 JSON quando a validacao falha. O
+       swapContent nao acha #ajax-content nesse JSON, cai na recarga total, e
+       a pagina volta limpa: o erro some (nunca foi para a sessao) e o
+       formulario reabre do zero. Pedindo HTML, o Laravel faz o redirect de
+       volta com os erros e a troca de conteudo os mostra no lugar certo. */
     var fetchOptions = {
       method: method,
-      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'text/html' },
       credentials: 'same-origin',
     };
 
